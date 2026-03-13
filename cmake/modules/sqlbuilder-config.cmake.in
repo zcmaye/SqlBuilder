@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: (C) 2021 Daniel Nicoletti <zcmaye@gmail.com>
+# SPDX-License-Identifier: MIT
+
+# - Config information for SqlBuilder
+# This file defines:
+#
+#  SqlBuilder_INCLUDE_DIR - the SqlBuilder include directory
+#  SqlBuilder_LIBRARY - Link these to use SqlBuilder
+
+SET(prefix "@CMAKE_INSTALL_PREFIX@")
+SET(exec_prefix "@CMAKE_INSTALL_PREFIX@")
+SET(SqlBuilder_FOUND "TRUE")
+
+include("${CMAKE_CURRENT_LIST_DIR}/@EXPORT_NAME@Targets.cmake")
