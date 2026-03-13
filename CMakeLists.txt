@@ -56,7 +56,7 @@ target_include_directories(SqlBuilder
 )
 
 if(NOT BUILD_SHARED_LIBS)
-  target_compile_definitions(SqlBuilder PUBLIC "SqlBuilder")
+  target_compile_definitions(SqlBuilder PUBLIC "SqlBuilder_STATICLIB")
 endif()
 
 set_target_properties(SqlBuilder PROPERTIES

@@ -165,7 +165,7 @@ namespace hdy::tool::sql {
 		//ename LIKE '张%'
 		Condition like(const std::optional<std::string>& value, std::string_view fmt = "%{}%") const 
 		{
-			if (!value.has_value()) {
+			if (value.has_value()) {
 				return like(*value, fmt);
 			}
 			return Condition();

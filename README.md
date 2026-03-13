@@ -5,8 +5,8 @@
 ### 编译成库
 
 ```bash
-cmake -B build
+cmake -B build -DCMAKE_INSTALL_PREFIX="./install"
 cmake --build build
-cmake --install build --prefix "./install"
+cmake --install build
 ```
 
