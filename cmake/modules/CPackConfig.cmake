@@ -1,10 +1,10 @@
-# SPDX-FileCopyrightText: (C) 2021 Zcmaye Nicoletti <zcmaye@gmail.com>
+# SPDX-FileCopyrightText: (C) 2021 Zcmaye  <zcmaye@gmail.com>
 # SPDX-License-Identifier: MIT
 
-set(CPACK_PACKAGE_VENDOR "Zcmaye Nicoletti")
+set(CPACK_PACKAGE_VENDOR "Zcmaye ")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "SqlBuilder library.")
 #set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/../README.md")
-set(CPACK_PACKAGE_CONTACT "Zcmaye Nicoletti <zcmaye@gmail.com>")
+set(CPACK_PACKAGE_CONTACT "Zcmaye  <zcmaye@gmail.com>")
 
 if(UNIX)
   if(NOT CPACK_GENERATOR)
