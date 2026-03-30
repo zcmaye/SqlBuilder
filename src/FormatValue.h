@@ -36,7 +36,7 @@ namespace hdy::tool::sql {
 	// 1. 字符串类型格式化（单独处理，保留原始字符串，可添加引号增强可读性）
 	template <typename T>
 	std::string format_value(const T& str,
-		std::enable_if_t <is_string_v<T>, int > = 0)
+		std::enable_if_t <hdy::type::traits::is_string_v<T>, int > = 0)
 	{
 		//转义字符串参数，防止SQL注入
 		auto e_str = escape_string(std::format("{}", str));
@@ -56,7 +56,7 @@ namespace hdy::tool::sql {
 	// 3. 容器类型格式化（手动拼接元素）
 	template <typename Container>
 	std::string format_value(const Container& con,
-		std::enable_if_t<is_container_v<Container> && !is_map_v<Container>, int> = 0)
+		std::enable_if_t<hdy::type::traits::is_container_v<Container> && !hdy::type::traits::is_map_v<Container>, int> = 0)
 	{
 		std::string result = "(";
 		bool first = true;
@@ -84,7 +84,7 @@ namespace hdy::tool::sql {
 #ifdef SUPPORT_OATPP
 	template <typename T>
 	std::string format_value(T& value,
-		std::enable_if_t<hdy::is_object_v<T>, int> = 0)
+		std::enable_if_t<hdy::type::traits::is_object_v<T>, int> = 0)
 	{
 		if constexpr (std::is_same_v<T, oatpp::String>) {
 			if (value != nullptr && !value->empty()) {
@@ -104,7 +104,7 @@ namespace hdy::tool::sql {
 	// 4. map/unordered_map/vector<pair<?,?>>类型格式化
 	template <typename Container>
 	std::string format_value(const Container& con,
-		std::enable_if_t<is_map_v<Container>, int> = 0)
+		std::enable_if_t<hdy::type::traits::is_map_v<Container>, int> = 0)
 	{
 		//值类型
 		using ValueType = std::decay_t<typename Container::value_type::second_type>;
@@ -114,7 +114,7 @@ namespace hdy::tool::sql {
 			if (!first) {
 				result += ", ";
 			}
-			if constexpr (is_string_v<ValueType>) {
+			if constexpr (hdy::type::traits::is_string_v<ValueType>) {
 				result += std::format("\"{}\": \"{}\"", elem.first, elem.second);
 			}
 			else {

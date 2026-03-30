@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace hdy {
+namespace hdy::type::traits {
 	// ========== 第一步：定义容器判定特性（保留原有逻辑，确保排除string） ==========
 	template <typename T, typename = void>
 	struct is_container : std::false_type {};

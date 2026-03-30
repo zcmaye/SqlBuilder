@@ -322,27 +322,13 @@ void test_func()
 
 	auto c = case_end(1, std::vector{ 1,2,3,4 }, std::vector{ "one","two","three","four" }).as("hello");
 	std::println("{}", c.name());
-
-	std::stringstream ss(",apple,banana,orange,grape");
-	std::string token;
-
-	std::println("原始字符串:{}", ss.str());
-	std::print("分割结果:");
-
-	while (std::getline(ss, token, ',')) {
-		std::print("{} ", token);
-	}
 }
 
 int main()
 {
-	//test_total();
-	//test_func();
+	test_total();
+	test_func();
 	test_optional_select();
-
-	std::optional<std::string> str("hello");
-	std::println("{}", hdy::tool::sql::format_value(str));
-	std::println("{}", hdy::tool::sql::format_value(std::optional<int>()));
 
 	return 0;
 }

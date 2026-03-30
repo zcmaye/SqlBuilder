@@ -2,7 +2,7 @@
 
 project(SqlBuilder CXX)
 
-option(BUILD_TESTS "Create test target for SqlBuilder" OFF)
+option(BUILD_TESTS "Create test target for SqlBuilder" ON)
 
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 set(CMAKE_CXX_STANDARD 23)

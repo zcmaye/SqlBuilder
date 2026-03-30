@@ -2,10 +2,8 @@
 
 #include "Column.h"
 #include <algorithm>
-#include <sstream>
 
 namespace hdy::tool::sql {
-
 	class Select {
 	public:
 		/**
@@ -201,7 +199,7 @@ namespace hdy::tool::sql {
 		}
 
 		template<typename Object, typename Fn /* = std::function<std::vector<std::string>(Object)> */,
-			std::enable_if_t<!hdy::is_container_v<std::decay_t<Object>>, int> = 0>
+			std::enable_if_t<!hdy::type::traits::is_container_v<std::decay_t<Object>>, int> = 0>
 		Insert& values_if(Object&& object, Fn&& fn) {
 			auto vec = fn(object);
 			if (_columns.size() != vec.size()) {
@@ -212,7 +210,7 @@ namespace hdy::tool::sql {
 		}
 
 		template<typename Container, typename Fn /* = std::function<std::vector<std::string>(Object)> */,
-			std::enable_if_t<hdy::is_container_v<std::decay_t<Container>>, int> = 0>
+			std::enable_if_t<hdy::type::traits::is_container_v<std::decay_t<Container>>, int> = 0>
 		Insert& values_for(Container&& con, Fn&& fn) {
 			for (auto& object : con) {
 				auto vec = fn(object);
@@ -233,9 +231,7 @@ namespace hdy::tool::sql {
 			}
 
 			auto skips = skip_columns();
-			std::stringstream ss;
-			ss << _insert << " " << _table << "(" << field_string(skips) << ") VALUES " << value_string(skips);
-			return ss.str();
+			return std::format("INSERT INTO {}({}) VALUES {}",_table,field_string(skips),value_string(skips));
 		}
 
 	private:
@@ -255,13 +251,13 @@ namespace hdy::tool::sql {
 			return skip_columns_;
 		}
 
-				/**
+		/**
 		 * 生成字段列表(filed1,file2,...).
 		 */
 		std::string field_string(const std::vector<int>& skips)const {
 			const std::string delimiter = " , ";
 			std::string str;
-			for(size_t i = 0; i < _columns.size(); i++) {
+			for (size_t i = 0; i < _columns.size(); i++) {
 				if (!std::binary_search(skips.begin(), skips.end(), i)) {
 					str += _columns[i].name();
 					if (i < _columns.size() - 1) {
@@ -310,7 +306,6 @@ namespace hdy::tool::sql {
 			return str;
 		}
 	private:
-		std::string _insert{ "INSERT INTO" };
 		std::vector<Column> _columns;
 		std::vector<std::vector<std::string>> _values;
 		std::string _table;
