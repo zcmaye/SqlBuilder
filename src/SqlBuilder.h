@@ -1,6 +1,7 @@
 ﻿#pragma once
 
-#include "Column.h"
+#include "Field.h"
+#include "Table.h"
 #include <algorithm>
 
 namespace hdy::tool::sql {
@@ -10,16 +11,17 @@ namespace hdy::tool::sql {
 		 * 使用N个字段构造Select对象.
 		 * 
 		 * \param ...args 要查询的字段名:
-		 * - 1,查询多个字段，例如:Column("empno"),Column("job")
-		 * - 2,查询所有字段，例如:Column("*") 或 Column(all);
-		 * - 3,统计行数，	 例如:Column("COUNT(*)") 或 count(all) 或 count_all()
-		 * - 4,给字段取别名，例如:Column("empno").as("eno"),Column("job").as("岗位")
+		 * - 1,查询多个字段，例如:Field("empno"),Field("job")
+		 * - 2,查询所有字段，例如:Field("*") 或 Field(all);
+		 * - 3,统计行数，	 例如:Field("COUNT(*)") 或 count(all) 或 count_all()
+		 * - 4,给字段取别名，例如:Field("empno").as("eno"),Field("job").as("岗位")
 		 */
-		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Column>...> , int> = 0>
+		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Field>...> , int> = 0>
 		Select(Args&& ...args)
 			: _columns{ std::forward<Args>(args)... }
 		{ }
 
+#if 0
 		Select& from(const std::string& table) {
 			_join_tables.push_back(std::format("FROM {}", table));
 			return *this;
@@ -48,13 +50,43 @@ namespace hdy::tool::sql {
 			_join_tables.push_back(std::format("FULL JOIN {}", table));
 			return *this;
 		}
-
-		Select& on(const Condition& cond) {
-			_join_tables.push_back(std::format("ON {}", cond.sql()));
+#else 
+		Select& from(const Table& table) {
+			_join_tables.push_back(std::format("FROM {}", table.to_string()));
 			return *this;
 		}
 
-		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Column>...>, int> = 0>
+		Select& inner_join(const Table& table) {
+			_join_tables.push_back(std::format("JOIN {}", table.to_string()));
+			return *this;
+		}
+
+		Select& join(const Table& table) {
+			return inner_join(table);
+		}
+
+		Select& left_join(const Table& table) {
+			_join_tables.push_back(std::format("LEFT JOIN {}", table.to_string()));
+			return *this;
+		}
+
+		Select& right_join(const Table& table) {
+			_join_tables.push_back(std::format("RIGHT JOIN {}", table.to_string()));
+			return *this;
+		}
+
+		Select& full_join(const Table& table) {
+			_join_tables.push_back(std::format("FULL JOIN {}", table.to_string()));
+			return *this;
+		}
+
+#endif
+		Select& on(const Condition& cond) {
+			_join_tables.push_back(std::format("ON {}", cond.to_string()));
+			return *this;
+		}
+
+		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Field>...>, int> = 0>
 			Select& using_(Args&& ...args) {
 			_join_tables.push_back(std::format("USING({})", hdy::tool::sql::join(args...)));
 			return *this;
@@ -70,7 +102,7 @@ namespace hdy::tool::sql {
 			return *this;
 		}
 
-		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Column>...>, int> = 0>
+		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Field>...>, int> = 0>
 		Select& group_by(Args&& ...args) {
 			_group_by = std::format("GROUP BY {}", hdy::tool::sql::join(args...));
 			return *this;
@@ -81,14 +113,14 @@ namespace hdy::tool::sql {
 			return *this;
 		}
 
-		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Column>...>, int> = 0>
+		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Field>...>, int> = 0>
 			Select& order_by(Args&& ...args) {
 			_order_by = std::format("ORDER BY {}", hdy::tool::sql::join(args...));
 			return *this;
 		}
 
 		Select& limit(size_t offset, size_t count) {
-			_limit = std::format("LIMIT {},{}", offset, count);
+			_limit = std::format("LIMIT {} OFFSET {}", count, offset);
 			return *this;
 		}
 
@@ -97,7 +129,7 @@ namespace hdy::tool::sql {
 			return *this;
 		}
 
-		std::string sql()const {
+		std::string to_string()const {
 			if (_columns.empty()) {
 				throw std::runtime_error("must have a column");
 			}
@@ -106,62 +138,69 @@ namespace hdy::tool::sql {
 			}
 
 			std::string result;
+			result.reserve(256);	//预估容量
 			result = std::format("SELECT {}", hdy::tool::sql::join(_columns));
-			result += " " + hdy::tool::sql::join(_join_tables, " ");
+			result += ' ';
+			result += hdy::tool::sql::join(_join_tables, " ");
 			if (!_cond.empty()) {
-				result += " " + std::format("WHERE {}", _cond.sql());
+				result += ' ';
+				result += std::format("WHERE {}", _cond.to_string());
 			}
 			if (!_group_by.empty()) {
-				result += " " + _group_by;
+				result += ' ';
+				result += _group_by;
 				if (!_having.empty()) {
-					result += " " + std::format("HAVING {}", _having.sql());
+					result += ' ';
+					result += std::format("HAVING {}", _having.to_string());
 				}
 			}
 			if (!_order_by.empty()) {
-				result += " " + _order_by;
+				result += ' ';
+				result += _order_by;
 			}
 			if (!_limit.empty()) {
-				result += " " + _limit;
+				result += ' ';
+				result += _limit;
 			}
 			return result;
 		}
 	public://子查询
-		template<typename T,std::enable_if_t<!std::is_same_v<T,Column> && std::is_same_v<T,Select>,int> = 0>
+		template<typename T, std::enable_if_t<!std::is_same_v<T, Field>&& std::is_same_v<T, Select>, int> = 0>
 		Select& from(const T& subquery) {
-			_join_tables.push_back(std::format("FROM ({})", subquery.sql()));
+			_join_tables.push_back(std::format("FROM ({})", subquery.to_string()));
 			return *this;
 		}
 
-		template<typename T,std::enable_if_t<!std::is_same_v<T,Column> && std::is_same_v<T,Select>,int> = 0>
+		template<typename T, std::enable_if_t<!std::is_same_v<T, Field>&& std::is_same_v<T, Select>, int> = 0>
 		Select& inner_join(const T& subquery) {
-			_join_tables.push_back(std::format("JOIN ({})", subquery.sql()));
+			_join_tables.push_back(std::format("JOIN ({})", subquery.to_string()));
 			return *this;
 		}
 
-		template<typename T,std::enable_if_t<!std::is_same_v<T,Column> && std::is_same_v<T,Select>,int> = 0>
+		template<typename T, std::enable_if_t<!std::is_same_v<T, Field>&& std::is_same_v<T, Select>, int> = 0>
 		Select& join(const T& subquery) {
 			return inner_join(subquery);
 		}
 
-		template<typename T,std::enable_if_t<!std::is_same_v<T,Column> && std::is_same_v<T,Select>,int> = 0>
+		template<typename T, std::enable_if_t<!std::is_same_v<T, Field>&& std::is_same_v<T, Select>, int> = 0>
 		Select& left_join(const T& subquery) {
-			_join_tables.push_back(std::format("LEFT JOIN ({})", subquery.sql()));
+			_join_tables.push_back(std::format("LEFT JOIN ({})", subquery.to_string()));
 			return *this;
 		}
 
-		template<typename T,std::enable_if_t<!std::is_same_v<T,Column> && std::is_same_v<T,Select>,int> = 0>
+		template<typename T, std::enable_if_t<!std::is_same_v<T, Field>&& std::is_same_v<T, Select>, int> = 0>
 		Select& right_join(const T& subquery) {
-			_join_tables.push_back(std::format("RIGHT JOIN ({})", subquery.sql()));
+			_join_tables.push_back(std::format("RIGHT JOIN ({})", subquery.to_string()));
 			return *this;
 		}
 
-		template<typename T,std::enable_if_t<!std::is_same_v<T,Column> && std::is_same_v<T,Select>,int> = 0>
+		template<typename T, std::enable_if_t<!std::is_same_v<T, Field>&& std::is_same_v<T, Select>, int> = 0>
 		Select& full_join(const T& subquery) {
-			_join_tables.push_back(std::format("FULL JOIN ({})", subquery.sql()));
+			_join_tables.push_back(std::format("FULL JOIN ({})", subquery.to_string()));
 			return *this;
 		}
 	private:
-		std::vector<Column> _columns;
+		std::vector<Field> _columns;
 		std::vector<std::string> _join_tables;
 		Condition _cond;
 		std::string _group_by;
@@ -172,7 +211,7 @@ namespace hdy::tool::sql {
 
 	class Insert {
 	public:
-		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && (std::conjunction_v<std::is_same<std::decay_t<Args>, Column>...>), int> = 0>
+		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && (std::conjunction_v<std::is_same<std::decay_t<Args>, Field>...>), int> = 0>
 			Insert(Args&& ...args)
 			: _columns({ std::forward<Args>(args)... })
 		{
@@ -183,8 +222,8 @@ namespace hdy::tool::sql {
 			return *this;
 		}
 
-		template<typename ...Args, std::enable_if_t < (sizeof...(Args) > 0)/* && is_all_arithmetic_or_string_v<Args...>*/ , int> = 0>
-		Insert& values(Args&& ...args) {
+		template<typename ...Args, std::enable_if_t < (sizeof...(Args) > 0)/* && is_all_arithmetic_or_string_v<Args...>*/, int> = 0>
+			Insert& values(Args&& ...args) {
 			if (_columns.size() != sizeof...(args)) {
 				throw std::runtime_error("fields and values size not match");
 			}
@@ -194,7 +233,7 @@ namespace hdy::tool::sql {
 		}
 
 		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0)/* && is_all_arithmetic_or_string_v<Args...>*/, int> = 0>
-		Insert& operator()(Args&& ...args) {
+			Insert& operator()(Args&& ...args) {
 			return values(std::forward<Args>(args)...);
 		}
 
@@ -222,7 +261,7 @@ namespace hdy::tool::sql {
 			return *this;
 		}
 
-		std::string sql()const {
+		std::string to_string()const {
 			if (_columns.empty() || _values.empty()) {
 				throw std::runtime_error("fields or values_list is empty");
 			}
@@ -254,59 +293,41 @@ namespace hdy::tool::sql {
 		/**
 		 * 生成字段列表(filed1,file2,...).
 		 */
-		std::string field_string(const std::vector<int>& skips)const {
-			const std::string delimiter = " , ";
-			std::string str;
-			for (size_t i = 0; i < _columns.size(); i++) {
-				if (!std::binary_search(skips.begin(), skips.end(), i)) {
-					str += _columns[i].name();
-					if (i < _columns.size() - 1) {
-						str += delimiter;
-					}
-				}
-				else {
-					printf("[field_string]: skip column %s\n", _columns[i].name().c_str());
-				}
+		std::string field_string(const std::vector<int>& skips) const {
+			std::string result;
+			bool first = true;
+			for (size_t i = 0; i < _columns.size(); ++i) {
+				if (std::binary_search(skips.begin(), skips.end(), i)) continue;
+				if (!first) result += ", ";
+				result += _columns[i].name();
+				first = false;
 			}
-			//删掉最后的分隔符
-			if (str.ends_with(delimiter)) {
-				str.resize(str.size() - delimiter.size());
-			}
-			return str;
+			return result;
 		}
 
 		/**
 		 * 生成值列表(value1,value2,...),(value1,value2,...)...
 		 */
-		std::string value_string(const std::vector<int>& skips)const {
-			const std::string delimiter = " , ";
-			std::string str;
-
-			bool first = true;
+		std::string value_string(const std::vector<int>& skips) const {
+			std::string result;
+			bool first_row = true;
 			for (auto& value : _values) {
-				if (!first) {
-					str += delimiter;
+				if (!first_row) result += ", ";
+				result += "(";
+				bool first_col = true;
+				for (size_t i = 0; i < value.size(); ++i) {
+					if (std::binary_search(skips.begin(), skips.end(), i)) continue;
+					if (!first_col) result += ", ";
+					result += value[i];
+					first_col = false;
 				}
-				str += "(";
-				for (size_t i = 0; i < value.size(); i++) {
-					if (!std::binary_search(skips.begin(), skips.end(), i)) {
-						str += value[i];
-						if (i < value.size() - 1) {
-							str += delimiter;
-						}
-					}
-				}
-				//删掉最后的分隔符
-				if (str.ends_with(delimiter)) {
-					str.resize(str.size() - delimiter.size());
-				}
-				str += ")";
-				first = false;
+				result += ")";
+				first_row = false;
 			}
-			return str;
+			return result;
 		}
 	private:
-		std::vector<Column> _columns;
+		std::vector<Field> _columns;
 		std::vector<std::vector<std::string>> _values;
 		std::string _table;
 	};
@@ -318,12 +339,12 @@ namespace hdy::tool::sql {
 		{
 		}
 
-		Update& set(const Set& set) {
-			_set += set;
+		Update& set(const AssignmentList& set) {
+			_sets += set;
 			return *this;
 		}
 
-		Update& operator()(const Set& _set) {
+		Update& operator()(const AssignmentList& _set) {
 			return set(_set);
 		}
 
@@ -332,19 +353,15 @@ namespace hdy::tool::sql {
 			return *this;
 		}
 
-		std::string sql()const {
+		std::string to_string()const {
 			if (_condition.empty()) {
 				throw std::runtime_error("condition is empty");
 			}
-
-			std::string result;
-			result = std::format("UPDATE {} SET {} WHERE {}", _table, _set.sql(), _condition.sql());
-			auto con = _condition.sql();
-			return result;
+			return std::format("UPDATE {} SET {} WHERE {}", _table, _sets.to_string(), _condition.to_string());
 		}
 	private:
 		std::string _table;
-		Set _set;
+		AssignmentList _sets;
 		Condition _condition;
 	};
 
@@ -360,12 +377,12 @@ namespace hdy::tool::sql {
 			return *this;
 		}
 
-		std::string sql()const {
+		std::string to_string()const {
 			if (_condition.empty()) {
 				throw std::runtime_error("condition is empty");
 			}
 			std::string result;
-			result = std::format("DELETE FROM {} WHERE {} ", _table, _condition.sql());
+			result = std::format("DELETE FROM {} WHERE {} ", _table, _condition.to_string());
 			return result;
 		}
 	private:

@@ -8,7 +8,7 @@ namespace hdy::tool::sql {
 	/**
 	 * 定义无效值.
 	 */
-	inline const std::string InvalidValue { "InvalidValue" };
+	inline constexpr std::string_view InvalidValue { "InvalidValue" };
 
 	/**
 	 * 转义字符串参数，防止SQL注入.
@@ -31,6 +31,7 @@ namespace hdy::tool::sql {
 		}
 		return escaped;
 	}
+	//inline std::string escape_like_string(const std::string& param);
 
 	// ========== 第三步：重载format_value函数（区分容器、字符串、算术类型） ==========
 	// 1. 字符串类型格式化（单独处理，保留原始字符串，可添加引号增强可读性）

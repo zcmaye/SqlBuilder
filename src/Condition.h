@@ -17,7 +17,7 @@ namespace hdy::tool::sql {
 		{
 		}
 
-		Condition operator &&(const Condition& other) {
+		Condition operator &&(const Condition& other) const{
 			if (other.empty()) {
 				return *this;
 			}
@@ -27,7 +27,7 @@ namespace hdy::tool::sql {
 			return Condition(std::format("({} AND {})", _sql, other._sql));
 		}
 
-		Condition operator ||(const Condition& other) {
+		Condition operator ||(const Condition& other) const{
 			if (other.empty()) {
 				return *this;
 			}
@@ -37,17 +37,17 @@ namespace hdy::tool::sql {
 			return Condition(std::format("({} OR {})", _sql, other._sql));
 		}
 
-		Condition operator !() {
+		Condition operator!() const {
 			if (empty()) {
-				return *this;;
+				return *this;
 			}
 			return Condition(std::format("NOT {}", _sql));
 		}
 
-		bool empty()const { return _sql.empty(); }
+		bool empty() const { return _sql.empty(); }
 
-		operator const std::string& ()const { return _sql; }
-		const std::string& sql()const { return _sql; }
+		operator const std::string &() const { return _sql; }
+		const std::string& to_string()const { return _sql; }
 	private:
 		std::string _sql;
 	};

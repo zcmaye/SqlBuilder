@@ -7,7 +7,7 @@
  *********************************************************************/
 
 #include "SqlBuilder.h"
-#include "Funcation.h"
+#include "Function.h"
 
 #include <print>
 #include <string>
@@ -69,27 +69,27 @@ void test_where()
 {
 	//empno = 1 AND ename = 'maye' OR sal = 6000.02 AND gender = 1 
 	Condition condition("empno = 1");
-	std::println("{}", condition.sql());
+	std::println("{}", condition.to_string());
 
 	auto condi = !(Condition("ename","=",hdy::tool::sql::format_value("maye")) && 
 	Condition("age", "=",hdy::tool::sql::format_value(123)))||
 		Condition("comm", "IS", "NULL");
 
-	std::println("{}", condi.sql());
+	std::println("{}", condi.to_string());
 
-	using hdy::tool::sql::Column;
+	using hdy::tool::sql::Field;
 
-	auto c = Column("ename") == 1111 && Column("age") > 123 and Column("sal") < 6000.02
-		&& Column("sal").between_and(3000, 6000)
-		&& Column("comm").is_null()
-		&& Column("deptno").is_not_null()
-		&& Column("hiredate").between_and("2020-01-01", "2020-12-31")
-		&& Column("job") == "sales"
-		&& Column("job") > "sales"
-		&& Column("job") < "sales"
-		&& Column("job") != "sales";
+	auto c = Field("ename") == 1111 && Field("age") > 123 and Field("sal") < 6000.02
+		&& Field("sal").between_and(3000, 6000)
+		&& Field("comm").is_null()
+		&& Field("deptno").is_not_null()
+		&& Field("hiredate").between_and("2020-01-01", "2020-12-31")
+		&& Field("job") == "sales"
+		&& Field("job") > "sales"
+		&& Field("job") < "sales"
+		&& Field("job") != "sales";
 
-	std::println("{}", c.sql());
+	std::println("{}", c.to_string());
 
 	using namespace hdy::tool::sql::literals;
 	c = "ename"_c.in(std::vector<const char*>{"hello", "nihao", "nice"})
@@ -97,7 +97,7 @@ void test_where()
 		&& "ename"_c.not_in(std::vector<const char*>{"hello", "nihao", "nice"})
 		&& "empnno"_c.not_in(std::vector{ 7788,99,55,6633 });
 
-	std::println("{}", c.sql());
+	std::println("{}", c.to_string());
 
 	std::println("{}",(std::string)("empno"_c == "maye" && "deptno"_c == 20));
 }
@@ -105,16 +105,16 @@ void test_where()
 void test_update_set()
 {
 	//UPDATE emp SET ename='maye',job='sales',sal=6000.02,comm=0.1,deptno=20 WHERE empno=1;
-	auto set = (hdy::tool::sql::Set("ename", hdy::tool::sql::format_value("maye")), hdy::tool::sql::Set("sal", hdy::tool::sql::format_value(5200)));
-	std::println("{}", set.sql());
+	auto set = (hdy::tool::sql::Assign("ename", hdy::tool::sql::format_value("maye")), hdy::tool::sql::Assign("sal", hdy::tool::sql::format_value(5200)));
+	std::println("{}", set.to_string());
 
 	using namespace hdy::tool::sql::literals;
 	std::string name = "maye";
 	double sal = 5200.05;
-	set = ("ename"_c = name, "sal"_c = sal, "comm"_c = 0.1,"deptno"_c = nullptr);
-	std::println("{}", set.sql());
+	auto sets = ("ename"_c = name, "sal"_c = sal, "comm"_c = 0.1,"deptno"_c = nullptr);
+	std::println("{}", sets.to_string());
 
-	std::println("UPDATE emp SET {} ", set.sql()); 
+	std::println("UPDATE emp SET {} ", sets.to_string()); 
 }
 
 void test_select()
@@ -125,7 +125,7 @@ void test_select()
 	sql = hdy::tool::sql::Select("empno"_c, "ename"_c.as("姓名"), "sal"_c, "comm"_c, "emp.deptno"_c)
 		.from("emp")
 		.join("dept").on("emp.deptno"_c == "dept.deptno"_c)
-		.sql();
+		.to_string();
 	std::println("{}", sql);
 
 	sql = hdy::tool::sql::Select(hdy::tool::sql::all)
@@ -133,7 +133,7 @@ void test_select()
 		.left_join("dept")
 		.using_("deptno"_c)
 		.where("emp.deptno"_c == 20 && "emp.sal"_c > 6000)
-		.sql();
+		.to_string();
 	std::println("{}", sql);
 
 
@@ -141,7 +141,7 @@ void test_select()
 		.from("emp")
 		.right_join("dept").on("emp.deptno"_c == "dept.deptno"_c)
 		.join("salgrade").as("s").on("emp.sal"_c >= "s.losal"_c && "emp.sal"_c <= "s.hisal"_c)
-		.sql();
+		.to_string();
 	std::println("{}", sql);
 
 
@@ -151,7 +151,7 @@ void test_select()
 		.having("cnt"_c > 3)
 		.order_by("cnt"_c.desc())
 		.limit(10, 20)
-		.sql();
+		.to_string();
 	std::println("{}", sql);
 }
 
@@ -169,7 +169,7 @@ void test_optional_select()
 	sql = hdy::tool::sql::Select("empno"_c, "ename"_c.as("姓名"), "sal"_c, "comm"_c, "emp.deptno"_c)
 		.from("emp")
 		.where("ename"_c == searchEmp.ename && "hiredate"_c > searchEmp.hiredate && "sal"_c == searchEmp.sal)
-		.sql();
+		.to_string();
 	std::println("{}", sql);
 }
 
@@ -184,7 +184,7 @@ void test_insert()
 		       (7788,"helo","sales")
 		       (7788,"helo","sales")
 		.into("emp")
-		.sql();
+		.to_string();
 
 }
 
@@ -195,7 +195,7 @@ void test_update()
 	hdy::tool::sql::Update("emp")
 		.set("ename"_c = "maye")("sal"_c = 5200)
 		.where("empno"_c == 7788)
-		.sql();
+		.to_string();
 
 }
 
@@ -205,7 +205,7 @@ void test_delete()
 
 	hdy::tool::sql::Delete("emp")
 		.where("empno"_c == 7788)
-		.sql();
+		.to_string();
 }
 
 void test_subquery()
@@ -220,21 +220,21 @@ void test_subquery()
 	sql = hdy::tool::sql::Select("empno"_c, "ename"_c)
 		.from("emp")
 		.where("empno"_c.in(subquery))
-		.sql();
+		.to_string();
 	std::println("WHERE SUBQUERY:{}", sql);
 
 	//-- 在from中使用子查询
 	subquery = hdy::tool::sql::Select("empno"_c,"ename"_c,"sal"_c,"deptno"_c).from("emp").where("sal"_c > 5000);
 	sql = hdy::tool::sql::Select("empno"_c, "ename"_c)
 		.from(subquery).as("e")
-		.sql();
+		.to_string();
 	std::println("FROM SUBQUERY:{}", sql);
 
 	//-- 在select中使用子查询
 	subquery = hdy::tool::sql::Select("sal"_c.as("年薪")).from("emp").where("empno"_c == "e.empno"_c);
-	sql = hdy::tool::sql::Select("empno"_c, hdy::tool::sql::Column(subquery).as("年薪"), "ename"_c)
+	sql = hdy::tool::sql::Select("empno"_c, hdy::tool::sql::Field(subquery).as("年薪"), "ename"_c)
 		.from("emp").as("e")
-		.sql();
+		.to_string();
 	std::println("SELECT SUBQUERY:{}", sql);
 
 	//更新
@@ -243,7 +243,7 @@ void test_subquery()
 	sql = hdy::tool::sql::Update("emp")
 		.set("sal"_c = "sal"_c - 5200)
 		.where("empno"_c.in(subquery))
-		.sql();
+		.to_string();
 	std::println("UPDATE SUBQUERY:{}", sql);
 
 	//删除
@@ -251,7 +251,7 @@ void test_subquery()
 	subquery = hdy::tool::sql::Select("empno"_c).from("emp").where("sal"_c > 6000);
 	sql = hdy::tool::sql::Delete("emp")
 		.where("empno"_c.in(subquery))
-		.sql();
+		.to_string();
 	std::println("DELETE SUBQUERY:{}", sql);
 }
 
@@ -288,14 +288,14 @@ void test_total()
 		.where("empno"_c == empno && "ename"_c == ename
 			&& "sal"_c > sal && "job"_c == job
 		)
-		.sql();
+		.to_string();
 
 	std::println("{}", sql);
 
 	sql = hdy::tool::sql::Update("emp")
 		.set("sal"_c = "sal"_c - 5200)
 		.where("empno"_c == empno && "ename"_c == ename)
-		.sql();
+		.to_string();
 
 	std::println("{}", sql);
 #endif
@@ -306,7 +306,7 @@ void test_func()
 	using namespace hdy::tool::sql;
 	using namespace hdy::tool::sql::literals;
 
-	//max("sal"_c).as("max_sal").sql();
+	//max("sal"_c).as("max_sal").to_string();
 
 	//std::println("{}", now().raw_str());
 

@@ -1,13 +1,11 @@
-#pragma once
+﻿#pragma once
 
-
-#define  SUPPORT_OPTIONAL	/*!是否支持std::optional*/
-//#define  SUPPORT_OATPP		/*!是否支持std::optional*/
-
-#ifdef SUPPORT_OPTIONAL
-	#include <optional>
+#ifdef SQLBUILDER_USE_OPTIONAL
+#include <optional>
+#define SUPPORT_OPTIONAL
 #endif
 
-#ifdef  SUPPORT_OATPP
-	#include "common/core/Types.hpp"
+#ifdef SQLBUILDER_USE_OATPP
+#include "common/core/Types.hpp"
+#define SUPPORT_OATPP
 #endif
