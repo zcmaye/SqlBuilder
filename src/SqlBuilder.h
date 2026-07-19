@@ -1,10 +1,18 @@
-﻿#pragma once
+﻿/*****************************************************************//**
+ * \file   SqlBuilder.h
+ * \brief  核心语句类
+ * 
+ * \author Maye
+ * \date   July 2026
+ *********************************************************************/
+#pragma once
 
+#include "SqlException.h"
 #include "Field.h"
 #include "Table.h"
 #include <algorithm>
 
-namespace hdy::tool::sql {
+namespace zc::sqlbuilder {
 	class Select {
 	public:
 		/**
@@ -21,36 +29,6 @@ namespace hdy::tool::sql {
 			: _columns{ std::forward<Args>(args)... }
 		{ }
 
-#if 0
-		Select& from(const std::string& table) {
-			_join_tables.push_back(std::format("FROM {}", table));
-			return *this;
-		}
-
-		Select& inner_join(const std::string& table) {
-			_join_tables.push_back(std::format("JOIN {}", table));
-			return *this;
-		}
-
-		Select& join(const std::string& table) {
-			return inner_join(table);
-		}
-
-		Select& left_join(const std::string& table) {
-			_join_tables.push_back(std::format("LEFT JOIN {}", table));
-			return *this;
-		}
-
-		Select& right_join(const std::string& table) {
-			_join_tables.push_back(std::format("RIGHT JOIN {}", table));
-			return *this;
-		}
-
-		Select& full_join(const std::string& table) {
-			_join_tables.push_back(std::format("FULL JOIN {}", table));
-			return *this;
-		}
-#else 
 		Select& from(const Table& table) {
 			_join_tables.push_back(std::format("FROM {}", table.to_string()));
 			return *this;
@@ -80,7 +58,6 @@ namespace hdy::tool::sql {
 			return *this;
 		}
 
-#endif
 		Select& on(const Condition& cond) {
 			_join_tables.push_back(std::format("ON {}", cond.to_string()));
 			return *this;
@@ -88,12 +65,12 @@ namespace hdy::tool::sql {
 
 		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Field>...>, int> = 0>
 			Select& using_(Args&& ...args) {
-			_join_tables.push_back(std::format("USING({})", hdy::tool::sql::join(args...)));
+			_join_tables.push_back(std::format("USING({})", zc::sqlbuilder::join(args...)));
 			return *this;
 		}
 
 		Select& as(const std::string& _alias) {
-			_join_tables.push_back(std::format("AS {}", _alias));
+			_join_tables.push_back(std::format("AS '{}'", _alias));
 			return *this;
 		}
 
@@ -104,7 +81,7 @@ namespace hdy::tool::sql {
 
 		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Field>...>, int> = 0>
 		Select& group_by(Args&& ...args) {
-			_group_by = std::format("GROUP BY {}", hdy::tool::sql::join(args...));
+			_group_by = std::format("GROUP BY {}", zc::sqlbuilder::join(args...));
 			return *this;
 		}
 
@@ -115,7 +92,7 @@ namespace hdy::tool::sql {
 
 		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0) && std::conjunction_v<std::is_same<std::decay_t<Args>, Field>...>, int> = 0>
 			Select& order_by(Args&& ...args) {
-			_order_by = std::format("ORDER BY {}", hdy::tool::sql::join(args...));
+			_order_by = std::format("ORDER BY {}", zc::sqlbuilder::join(args...));
 			return *this;
 		}
 
@@ -130,18 +107,14 @@ namespace hdy::tool::sql {
 		}
 
 		std::string to_string()const {
-			if (_columns.empty()) {
-				throw std::runtime_error("must have a column");
-			}
-			if (_join_tables.empty()) {
-				throw std::runtime_error("must have a table");
-			}
+			ZC_ASSERT(!_columns.empty(),"must have a column!");
+			ZC_ASSERT(!_join_tables.empty(),"must have a table!");
 
 			std::string result;
 			result.reserve(256);	//预估容量
-			result = std::format("SELECT {}", hdy::tool::sql::join(_columns));
+			result = std::format("SELECT {}", zc::sqlbuilder::join(_columns,", "));
 			result += ' ';
-			result += hdy::tool::sql::join(_join_tables, " ");
+			result += _join_tables.join(" ");
 			if (!_cond.empty()) {
 				result += ' ';
 				result += std::format("WHERE {}", _cond.to_string());
@@ -165,6 +138,7 @@ namespace hdy::tool::sql {
 			return result;
 		}
 	public://子查询
+#ifdef USE_TEMPLATE
 		template<typename T, std::enable_if_t<!std::is_same_v<T, Field>&& std::is_same_v<T, Select>, int> = 0>
 		Select& from(const T& subquery) {
 			_join_tables.push_back(std::format("FROM ({})", subquery.to_string()));
@@ -199,9 +173,39 @@ namespace hdy::tool::sql {
 			_join_tables.push_back(std::format("FULL JOIN ({})", subquery.to_string()));
 			return *this;
 		}
+#else
+		Select& from(const Select& subquery) {
+			_join_tables.push_back(std::format("FROM ({})", subquery.to_string()));
+			return *this;
+		}
+
+		Select& inner_join(const Select& subquery) {
+			_join_tables.push_back(std::format("JOIN ({})", subquery.to_string()));
+			return *this;
+		}
+
+		Select& join(const Select& subquery) {
+			return inner_join(subquery);
+		}
+
+		Select& left_join(const Select& subquery) {
+			_join_tables.push_back(std::format("LEFT JOIN ({})", subquery.to_string()));
+			return *this;
+		}
+
+		Select& right_join(const Select& subquery) {
+			_join_tables.push_back(std::format("RIGHT JOIN ({})", subquery.to_string()));
+			return *this;
+		}
+
+		Select& full_join(const Select& subquery) {
+			_join_tables.push_back(std::format("FULL JOIN ({})", subquery.to_string()));
+			return *this;
+		}
+#endif
 	private:
 		std::vector<Field> _columns;
-		std::vector<std::string> _join_tables;
+		StringList _join_tables;
 		Condition _cond;
 		std::string _group_by;
 		Condition _having;
@@ -217,60 +221,49 @@ namespace hdy::tool::sql {
 		{
 		}
 
-		Insert& into(const std::string& table) {
+		Insert& into(const Table& table) {
 			_table = table;
 			return *this;
 		}
 
 		template<typename ...Args, std::enable_if_t < (sizeof...(Args) > 0)/* && is_all_arithmetic_or_string_v<Args...>*/, int> = 0>
-			Insert& values(Args&& ...args) {
-			if (_columns.size() != sizeof...(args)) {
-				throw std::runtime_error("fields and values size not match");
-			}
-			auto vec = std::vector<std::string>{ format_value(args)... };
+		Insert& values(Args&& ...args) {
+			ZC_ASSERT(_columns.size() == sizeof...(args), "fields and values size not match");
+			auto vec = StringList{ format_value(args)... };
 			_values.emplace_back(vec);
 			return *this;
 		}
 
 		template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 0)/* && is_all_arithmetic_or_string_v<Args...>*/, int> = 0>
-			Insert& operator()(Args&& ...args) {
+		Insert& operator()(Args&& ...args) {
 			return values(std::forward<Args>(args)...);
 		}
 
-		template<typename Object, typename Fn /* = std::function<std::vector<std::string>(Object)> */,
-			std::enable_if_t<!hdy::type::traits::is_container_v<std::decay_t<Object>>, int> = 0>
+		template<typename Object, typename Fn /* = std::function<StringList(Object)> */,
+			std::enable_if_t<!zc::type::traits::is_container_v<std::decay_t<Object>>, int> = 0>
 		Insert& values_if(Object&& object, Fn&& fn) {
 			auto vec = fn(object);
-			if (_columns.size() != vec.size()) {
-				throw std::runtime_error("fields and values size not match");
-			}
+			ZC_ASSERT(_columns.size() == vec.size(), "fields and values size not match");
 			_values.emplace_back(vec);
 			return *this;
 		}
 
-		template<typename Container, typename Fn /* = std::function<std::vector<std::string>(Object)> */,
-			std::enable_if_t<hdy::type::traits::is_container_v<std::decay_t<Container>>, int> = 0>
+		template<typename Container, typename Fn /* = std::function<StringList(Object)> */,
+			std::enable_if_t<zc::type::traits::is_container_v<std::decay_t<Container>>, int> = 0>
 		Insert& values_for(Container&& con, Fn&& fn) {
 			for (auto& object : con) {
 				auto vec = fn(object);
-				if (_columns.size() != vec.size()) {
-					throw std::runtime_error("fields and values size not match");
-				}
+				ZC_ASSERT(_columns.size() == vec.size(), "fields and values size not match");
 				_values.emplace_back(vec);
 			}
 			return *this;
 		}
 
 		std::string to_string()const {
-			if (_columns.empty() || _values.empty()) {
-				throw std::runtime_error("fields or values_list is empty");
-			}
-			if (_table.empty()) {
-				throw std::runtime_error("table is empty");
-			}
-
+			ZC_ASSERT(!_columns.empty() && !_values.empty(), "fields or values_list is empty");
+			ZC_ASSERT(_table, "table is empty");
 			auto skips = skip_columns();
-			return std::format("INSERT INTO {}({}) VALUES {}",_table,field_string(skips),value_string(skips));
+			return std::format("INSERT INTO {}({}) VALUES {}", _table.to_string(), field_string(skips), value_string(skips));
 		}
 
 	private:
@@ -327,15 +320,15 @@ namespace hdy::tool::sql {
 			return result;
 		}
 	private:
+		Table _table;
 		std::vector<Field> _columns;
-		std::vector<std::vector<std::string>> _values;
-		std::string _table;
+		std::vector<StringList> _values;
 	};
 
 	class Update {
 	public:
-		Update(const std::string& table_name)
-			: _table(table_name)
+		Update(const Table& table)
+			: _table(table)
 		{
 		}
 
@@ -354,21 +347,21 @@ namespace hdy::tool::sql {
 		}
 
 		std::string to_string()const {
-			if (_condition.empty()) {
-				throw std::runtime_error("condition is empty");
-			}
-			return std::format("UPDATE {} SET {} WHERE {}", _table, _sets.to_string(), _condition.to_string());
+			ZC_ASSERT(_table, "table is empty");
+			ZC_ASSERT(_sets, "sets is empty");
+			ZC_ASSERT(!_condition.empty(), "condition is empty");
+			return std::format("UPDATE {} SET {} WHERE {}", _table.to_string(), _sets.to_string(), _condition.to_string());
 		}
 	private:
-		std::string _table;
+		Table _table;
 		AssignmentList _sets;
 		Condition _condition;
 	};
 
 	class Delete {
 	public:
-		Delete(const std::string& table_name)
-			: _table(table_name)
+		Delete(const Table& table)
+			: _table(table)
 		{
 		}
 
@@ -378,16 +371,14 @@ namespace hdy::tool::sql {
 		}
 
 		std::string to_string()const {
-			if (_condition.empty()) {
-				throw std::runtime_error("condition is empty");
-			}
-			std::string result;
-			result = std::format("DELETE FROM {} WHERE {} ", _table, _condition.to_string());
+			ZC_ASSERT(_table, "table is empty");
+			ZC_ASSERT(!_condition.empty(), "condition is empty");
+
+			auto result = std::format("DELETE FROM {} WHERE {} ", _table.to_string(), _condition.to_string());
 			return result;
 		}
 	private:
-		std::string _table;
+		Table _table;
 		Condition _condition;
 	};
-
 }

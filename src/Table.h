@@ -1,15 +1,21 @@
-﻿#pragma once
+﻿/*****************************************************************//**
+ * \file   Table.h
+ * \brief  表类
+ * 
+ * \author Maye
+ * \date   July 2026
+ *********************************************************************/
+#pragma once
+
+
+#include "SqlException.h"
+#include "detail/FormatValue.h"
+#include "detail/StringUtils.h"
 
 #include <string_view>
 #include <optional>
-#include "FormatValue.h"
-#include "SqlException.h"
-#include "StringUtils.h"
 
-#define TABLE_ASSERT(cond,msg) if (!(cond)) {throw TableError(msg);}
-
-
-namespace hdy::tool::sql {
+namespace zc::sqlbuilder {
 
 	class Select;
 
@@ -46,12 +52,18 @@ namespace hdy::tool::sql {
 			}
 			return _name;
 		}
+		operator bool() const { return !_name.empty(); }
 	private:
 		std::string _name;
 		std::optional<std::string> _alias;
 	};
 
-	inline Table operator""_t(const char* str, size_t len) {
-		return Table(std::string(str, len));
+	namespace table_literals {
+		inline Table operator""_t(const char* str, size_t len) {
+			return Table(std::string(str, len));
+		}
+		inline Table operator""_table(const char* str, size_t len) {
+			return Table(std::string(str, len));
+		}
 	}
 }

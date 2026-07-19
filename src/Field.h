@@ -1,18 +1,25 @@
-﻿#pragma once
+﻿/*****************************************************************//**
+ * \file   Field.h
+ * \brief  SQL字段
+ * 
+ * \author Maye
+ * \date   July 2026
+ *********************************************************************/
+#pragma once
 
 #include "Config.h"
-#include "FormatValue.h"
+#include "detail/FormatValue.h"
 #include "Condition.h"
 #include "Assign.h"
 #include "SqlException.h"
 
-#define FIELD_ASSERT(cond,msg) if (!(cond)) {throw FieldError(msg);}
 
-namespace hdy::tool::sql {
+namespace zc::sqlbuilder {
 
+	/** 提前声明查询类 */
 	class Select;
 
-	/** 字段 */
+	/** 字段类 */
 	class Field {
 	public:
 		Field() = default;
@@ -73,48 +80,49 @@ namespace hdy::tool::sql {
 		}
 
 	public:	//字段与值比较
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Condition operator==(T value) const {
 			return Condition(_name, "=", format_value<T>(value));
 		}
 
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Condition operator>(T value) const {
 			return Condition(_name, ">", format_value<T>(value));
 		}
 
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Condition operator>=(T value) const {
 			return Condition(_name, ">=", format_value<T>(value));
 		}
 
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Condition operator<(T value) const {
 			return Condition(_name, "<", format_value<T>(value));
 		}
 
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Condition operator<=(T value) const {
 			return Condition(_name, "<=", format_value<T>(value));
 		}
 
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Condition operator!=(T value) const {
 			return Condition(_name, "!=", format_value<T>(value));
 		}
 
 		//comm IS NULL
 		Condition is_null() const {
-			return Condition(_name, "IS NULL", {});
+			return Condition(_name, "IS", "NULL");
 		}
 
 		//comm IS NOT NULL
 		Condition is_not_null() const {
-			return Condition(_name, "IS NOT NULL", {});
+			return Condition(_name, "IS NOT", "NULL");
 		}
 
 		//ename LIKE '张%'
-		Condition like(const std::string& value,std::string_view fmt = "%{}%") const {
+		template<typename T, std::enable_if_t<zc::type::traits::is_string_v<T>, int> = 0>
+		Condition like(const T& value, std::string_view fmt = "%{}%") const {
 			std::string result(fmt.data(), fmt.length());
 			if (auto pos = result.find("{}");pos != std::string::npos) {
 				result.replace(pos, 2, escape_string(value));
@@ -123,25 +131,25 @@ namespace hdy::tool::sql {
 		}
 
 		//hiredate BETWEEN '1990-01-01' AND '2000-01-01'
-		template<typename T, std::enable_if_t<(std::is_arithmetic_v<T> || hdy::type::traits::is_string_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(std::is_arithmetic_v<T> || zc::type::traits::is_string_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Condition between_and(const T& lower, const T& upper) const {
 			return Condition(_name, "BETWEEN", std::format("{} AND {}", format_value(lower), format_value(upper)));
 		}
 
 		//ename IN ('张三', '李四')
-		template<typename T, std::enable_if_t<hdy::type::traits::is_container_v<T> && !hdy::type::traits::is_string_v<T> && !std::is_arithmetic_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<zc::type::traits::is_container_v<T> && !zc::type::traits::is_string_v<T> && !std::is_arithmetic_v<T>, int> = 0>
 		Condition in(const T& value) const {
 			return Condition(_name, "IN", format_value(value));
 		}
 
 		//ename NOT IN ('张三', '李四')
-		template<typename T, std::enable_if_t<hdy::type::traits::is_container_v<T> && !hdy::type::traits::is_string_v<T> && !std::is_arithmetic_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<zc::type::traits::is_container_v<T> && !zc::type::traits::is_string_v<T> && !std::is_arithmetic_v<T>, int> = 0>
 		Condition not_in(const T& value) const {
 			return Condition(_name, "NOT IN", format_value(value));
 		}
 	public:	//UPDATE 语句中SET值设置
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>)
-			&& !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>)
+			&& !zc::type::traits::is_container_v<T>, int> = 0>
 		AssignmentList operator=(const T& value) const {
 			return Assign(_name, format_value(value));
 		}
@@ -196,43 +204,46 @@ namespace hdy::tool::sql {
 		Condition in(const Select& subquery) const;
 		Condition not_in(const Select& subquery) const;
 	public://字段运算
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Field operator+(T value) const {
 			return Field(std::format("{} + {}", _name, format_value(value)));
 		}
 
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Field operator-(T value) const {
 			return Field(std::format("{} - {}", _name, format_value(value)));
 		}
 
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Field operator*(T value) const {
 			return Field(std::format("{} * {}", _name, format_value(value)));
 		}
 
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Field operator/(T value) const {
 			return Field(std::format("{} / {}", _name, format_value(value)));
 		}
 
-		template<typename T, std::enable_if_t<(hdy::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !hdy::type::traits::is_container_v<T>, int> = 0>
+		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Field operator%(T value) const {
 			return Field(std::format("{} % {}", _name, format_value(value)));
 		}
-#include "optional_impl.inc"
-#include "oatpp_impl.inc"
+#include "detail/optional_impl.inc"
+#include "detail/oatpp_impl.inc"
 	private:
 		std::string _name;						/*!字段名*/
 		std::optional<std::string> _alias;		/*!别名*/
 		std::optional<std::string> _ordering;	/*!排序*/
 	};
 
-	namespace literals {
+	namespace field_literals {
 		inline Field operator""_c(const char* name, std::size_t size) {
 			return Field(std::string(name, size));
 		}
 		inline Field operator""_f(const char* name, std::size_t size) {
+			return Field(std::string(name, size));
+		}
+		inline Field operator""_field(const char* name, std::size_t size) {
 			return Field(std::string(name, size));
 		}
 	}
@@ -263,18 +274,4 @@ namespace hdy::tool::sql {
 		return join({ std::forward<Args>(args)... });
 	}
 
-	//使用逗号连接所有字符串
-	inline std::string join(const std::vector<std::string>& vec, const std::string& delimiter = ",") {
-		// 格式化结果
-		std::string result;
-		bool first = true;
-		for (const auto& elem : vec) {
-			if (!first) {
-				result += delimiter;
-			}
-			result += elem;
-			first = false;
-		}
-		return result;
-	}
 }

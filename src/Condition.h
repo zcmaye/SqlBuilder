@@ -3,7 +3,7 @@
 #include <string>
 #include <format>
 
-namespace hdy::tool::sql {
+namespace zc::sqlbuilder {
 
 	class Condition {
 	public:
@@ -44,10 +44,10 @@ namespace hdy::tool::sql {
 			return Condition(std::format("NOT {}", _sql));
 		}
 
-		bool empty() const { return _sql.empty(); }
-
 		operator const std::string &() const { return _sql; }
 		const std::string& to_string()const { return _sql; }
+
+		bool empty() const { return _sql.empty(); }
 	private:
 		std::string _sql;
 	};

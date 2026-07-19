@@ -1,73 +1,38 @@
-﻿#pragma once
+﻿/*****************************************************************//**
+ * \file   Assign.h
+ * \brief  赋值类(支持 "emp.empno"_f = 7788)
+ * 
+ * \author Maye
+ * \date   July 2026
+ *********************************************************************/
+#pragma once
 
-#include <string>
+#include "SqlException.h"
 #include <format>
+#include <vector>
 
-namespace hdy::tool::sql {
-
+namespace zc::sqlbuilder {
 	/**
-	 * UPDATE语句中的SET 字句，支持 "emp.empno"_c = 7788
+	 * 单个字段赋值.
 	 */
-#if 0
 	class Assign
 	{
 	public:
-		explicit Assign(const std::string& stmt = "")
-			:_stmt(stmt)
-		{
-		}
-
-		Assign(const std::string& column, const std::string& value)
-			:_stmt(std::format("{} = {}", column, value))
-		{
-		}
-
-		Assign operator,(const Assign& other)const {
-			return Assign(*this).concat(other);
-		}
-
-		Assign& operator+=(const Assign& other){
-			return concat(other);
-		}
-
-		Assign& concat(const Assign& other){
-			if (_stmt.empty()) {
-				_stmt = other._stmt;
-			}
-			else if(other.empty()){
-				return *this;
-			}
-			else {
-				_stmt = std::format("{} , {}", _stmt, other._stmt);
-			}
-			return *this;
-		}
-
-		operator const std::string& ()const { return _stmt; }
-
-		std::string to_string() const { return _stmt; }
-
-		bool empty()const {return _stmt.empty(); }
-	private:
-		std::string _stmt;
-	};
-	using AssignmentList = Assign;
-#else
-	class Assign
-	{
-	public:
-		explicit Assign() { }
+		explicit Assign() {}
 
 		Assign(std::string field, std::string value)
 			: _field(std::move(field)), _value(std::move(value))
-		{ }
+		{
+		}
 
 		std::string to_string() const {
+			ZC_ASSERT(!_field.empty() && !_value.empty(), "field or value is empty");
 			return std::format("{} = {}", _field, _value);
 		}
-		operator const std::string ()const { return to_string(); }
+		operator const std::string()const { return to_string(); }
 
 		bool empty()const { return _value.empty(); }
+		explicit operator bool()const { return !empty(); }
 	private:
 		std::string _field;
 		std::string _value;
@@ -79,11 +44,13 @@ namespace hdy::tool::sql {
 
 		AssignmentList(std::string field, std::string value)
 			: _sets({ Assign{std::move(field), std::move(value)} })
-		{ }
+		{
+		}
 
 		AssignmentList(Assign set)
-			: _sets({ std::move(set)})
-		{ }
+			: _sets({ std::move(set) })
+		{
+		}
 
 		AssignmentList& operator+=(const AssignmentList& other) {
 			return add(other);
@@ -104,7 +71,7 @@ namespace hdy::tool::sql {
 			return *this;
 		}
 
-		operator const std::string ()const { return to_string(); }
+		operator const std::string()const { return to_string(); }
 
 		std::string to_string() const {
 			std::string result;
@@ -120,6 +87,7 @@ namespace hdy::tool::sql {
 		}
 
 		bool empty()const { return _sets.empty(); }
+		explicit operator bool()const { return !empty(); }
 	private:
 		std::vector<Assign> _sets;
 	};
@@ -127,14 +95,13 @@ namespace hdy::tool::sql {
 	inline AssignmentList operator,(const Assign& left, const Assign& right) {
 		return AssignmentList().add(left).add(right);
 	}
-	inline	AssignmentList operator,(const AssignmentList& left, const AssignmentList& right){
+	inline	AssignmentList operator,(const AssignmentList& left, const AssignmentList& right) {
 		return AssignmentList(left).add(right);
 	}
-	inline	AssignmentList operator,(const AssignmentList& sets, const Assign& set){
-		return AssignmentList(set).add(set);
+	inline	AssignmentList operator,(const AssignmentList& sets, const Assign& set) {
+		return AssignmentList(sets).add(set);
 	}
-	inline	AssignmentList operator,(const Assign& set, const AssignmentList& sets){
+	inline	AssignmentList operator,(const Assign& set, const AssignmentList& sets) {
 		return AssignmentList(set).add(sets);
 	}
-#endif
-	}
+}

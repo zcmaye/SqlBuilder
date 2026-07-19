@@ -1,8 +1,15 @@
-﻿#pragma once
+﻿/*****************************************************************//**
+ * \file   Function.h
+ * \brief  SQL函数
+ * 
+ * \author Maye
+ * \date   July 2026
+ *********************************************************************/
+#pragma once
 
 #include "Field.h"
 
-namespace hdy::tool::sql{
+namespace zc::sqlbuilder::fun{
 
 	/**
 	 * 返回原始字符串，不使用单引号包裹.
@@ -11,13 +18,12 @@ namespace hdy::tool::sql{
 		return Field(str);
 	}
 
-
 		/**
 	 * 生成(CASE <value> WHEN <when> THEN <then> ... END)语句.
 	 */
-	template<typename Value,typename Whens, typename Thens, std::enable_if_t<hdy::type::traits::is_container_v<Whens>&& hdy::type::traits::is_container_v<Thens>, int> = 0>
+	template<typename Value,typename Whens, typename Thens, std::enable_if_t<zc::type::traits::is_container_v<Whens>&& zc::type::traits::is_container_v<Thens>, int> = 0>
 	inline Field case_end(Value value, const Whens& when, const Thens& then) {
-		static_assert(std::is_same_v<Value, typename Whens::value_type>,"value type not equal when type");
+		//static_assert(std::is_same_v<Value, typename Whens::value_type>,"value type not equal when type");
 		if (when.size() != then.size()) {
 			throw std::runtime_error("when and then size not equal");
 		}
@@ -28,7 +34,7 @@ namespace hdy::tool::sql{
 		return Field(result + "END)");
 	}
 
-	template<typename Value,typename ObjectList, typename Fn, std::enable_if_t<hdy::type::traits::is_container_v<ObjectList>, int> = 0>
+	template<typename Value,typename ObjectList, typename Fn, std::enable_if_t<zc::type::traits::is_container_v<ObjectList>, int> = 0>
 	inline Field case_end_for(Value value, const ObjectList& objects, Fn&& fn) {
 		if (objects.empty()) {
 			throw std::runtime_error("objects is empty");
@@ -52,7 +58,7 @@ namespace hdy::tool::sql{
 
 
 	/***************************************常用函数**********************************************/
-	template<typename T, std::enable_if_t<hdy::type::traits::is_string_v<T> || std::is_same_v<T, Field>, int> = 0>
+	template<typename T, std::enable_if_t<zc::type::traits::is_string_v<T> || std::is_same_v<T, Field>, int> = 0>
 	inline Field upper(const T& v) {
 		return Field(std::format("UPPER({})",format_value(v)));
 	}
@@ -130,14 +136,14 @@ namespace hdy::tool::sql{
 	inline Field strcmp(std::string_view str1,std::string_view str2) {
 		return Field(std::format("STRCMP('{}','{}')", str1, str2));
 	}
-	template <typename ...Args, std::enable_if_t<(sizeof...(Args) > 1) && std::conjunction_v<hdy::type::traits::is_string<std::decay_t<Args>>...>, int> = 0>
+	template <typename ...Args, std::enable_if_t<(sizeof...(Args) > 1) && std::conjunction_v<zc::type::traits::is_string<std::decay_t<Args>>...>, int> = 0>
 	inline Field elt(size_t n, Args&&...args) {
-		std::vector<std::string> vec = { std::format("'{}'", std::forward<Args>(args))... };
+		StringList vec = { std::format("'{}'", std::forward<Args>(args))... };
 		return Field(std::format("ELT({},{})", n, join(vec)));
 	}
-	template <typename ...Args, std::enable_if_t<(sizeof...(Args) > 1) && std::conjunction_v<hdy::type::traits::is_string<std::decay_t<Args>>...>, int> = 0>
+	template <typename ...Args, std::enable_if_t<(sizeof...(Args) > 1) && std::conjunction_v<zc::type::traits::is_string<std::decay_t<Args>>...>, int> = 0>
 	inline Field field(std::string_view str, Args&&...args) {
-		std::vector<std::string> vec = { std::format("'{}'", std::forward<Args>(args))... };
+		StringList vec = { std::format("'{}'", std::forward<Args>(args))... };
 		return Field(std::format("FIELD({},{})", str, join(vec)));
 	}
 	inline Field find_in_set(std::string_view str, std::string_view strlist) {

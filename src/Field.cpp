@@ -1,7 +1,7 @@
-﻿#include "Field.h"
+#include "Field.h"
 #include "SqlBuilder.h"
 
-namespace hdy::tool::sql {
+namespace zc::sqlbuilder {
 	Field::Field(const Select& subquery)
 		: _name("(" + subquery.to_string() + ")")
 	{

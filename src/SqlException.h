@@ -2,55 +2,38 @@
 
 #include <stdexcept>
 
-class SqlException : public std::runtime_error
-{
-public:
-    explicit SqlException(const char* modName, const std::string& _Message)
-        : runtime_error(_Message.c_str())
-        , m_module_name(modName)
+namespace zc::sqlbuilder {
+    class SqlException : public std::runtime_error
     {
-    }
+    public:
+        explicit SqlException(const char* modName, const std::string& _Message)
+            : runtime_error(_Message.c_str())
+            , m_module_name(modName)
+        {
+        }
 
-    explicit SqlException(const char* modName, const char* _Message)
-        : runtime_error(_Message)
-        , m_module_name(modName)
-    {
-    }
+        explicit SqlException(const char* modName, const char* _Message)
+            : runtime_error(_Message)
+            , m_module_name(modName)
+        {
+        }
 
-    explicit SqlException(const char* _Message)
-        : runtime_error(_Message)
-        , m_module_name("SQL")
-    {
-    }
+        explicit SqlException(const char* _Message)
+            : runtime_error(_Message)
+            , m_module_name("SQL")
+        {
+        }
 
 
-    const char* module_name()const { return m_module_name; }
-private:
-    const char* m_module_name{};
-};
+        const char* module_name()const { return m_module_name; }
+    private:
+        const char* m_module_name{};
+    };
+}
 
-class TableError : public SqlException {
-public:
-    explicit TableError(const std::string& _Message)
-        : SqlException("Table", _Message.c_str())
-    {
-    }
+#define SQL_ASSERT(MODNAME,expr,...) if (!(expr)) throw SqlException(MODNAME,#expr##" : "## __VA_ARGS__)
 
-    explicit TableError(const char* _Message)
-		: SqlException("Table", _Message)
-    {
-    }
-};
+#define TABLE_ASSERT(expr,...) SQL_ASSERT("TABLE",expr,__VA_ARGS__)
+#define FIELD_ASSERT(expr,...) SQL_ASSERT("FIELD",expr,__VA_ARGS__)
+#define ZC_ASSERT(expr,...)    SQL_ASSERT("ZC",expr,__VA_ARGS__)
 
-class FieldError : public SqlException {
-public:
-    explicit FieldError(const std::string& _Message)
-        : SqlException("Field", _Message.c_str())
-    {
-    }
-
-    explicit FieldError(const char* _Message)
-        : SqlException("Field", _Message)
-    {
-    }
-};

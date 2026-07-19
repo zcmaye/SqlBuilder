@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15)
 
 project(SqlBuilder
     VERSION 1.0.0
@@ -30,7 +30,8 @@ endif()
 add_library(SqlBuilder
     src/Field.cpp
     src/Table.cpp
-    src/StringUtils.cpp
+    #src/detail/SqlValue.cpp
+    src/detail/StringUtils.cpp
 )
 target_include_directories(SqlBuilder
     PUBLIC
@@ -95,11 +96,44 @@ install(FILES
 # 测试
 if(BUILD_TESTS)
     enable_testing()
-    add_executable(test_sql_builder tests/test_sql_builder.cpp)
-    target_link_libraries(test_sql_builder PRIVATE SqlBuilder)
-    add_test(NAME test_sql_builder COMMAND test_sql_builder)
+
+    add_executable(test_field tests/test_field.cpp)
+    target_link_libraries(test_field PRIVATE SqlBuilder)
+    add_test(NAME test_field COMMAND test_field)
+
+    add_executable(test_condition tests/test_condition.cpp)
+    target_link_libraries(test_condition PRIVATE SqlBuilder)
+    add_test(NAME test_condition COMMAND test_condition)
+
+    add_executable(test_assign tests/test_assign.cpp)
+    target_link_libraries(test_assign PRIVATE SqlBuilder)
+    add_test(NAME test_assign COMMAND test_assign)
+
+    add_executable(test_select tests/test_select.cpp)
+    target_link_libraries(test_select PRIVATE SqlBuilder)
+    add_test(NAME test_select COMMAND test_select)
+
+    add_executable(test_insert tests/test_insert.cpp)
+    target_link_libraries(test_insert PRIVATE SqlBuilder)
+    add_test(NAME test_insert COMMAND test_insert)
+
+    add_executable(test_update_delete tests/test_update_delete.cpp)
+    target_link_libraries(test_update_delete PRIVATE SqlBuilder)
+    add_test(NAME test_update_delete COMMAND test_update_delete)
+
+    add_executable(test_function tests/test_function.cpp)
+    target_link_libraries(test_function PRIVATE SqlBuilder)
+    add_test(NAME test_function COMMAND test_function)
 
     add_executable(test_table tests/test_table.cpp)
     target_link_libraries(test_table PRIVATE SqlBuilder)
     add_test(NAME test_table COMMAND test_table)
+
+    add_executable(test_table_declare tests/test_table_declare.cpp)
+    target_link_libraries(test_table_declare PRIVATE SqlBuilder)
+    add_test(NAME test_table_declare COMMAND test_table_declare)
+
+    add_executable(test_sql_builder tests/test_sql_builder_xxx.cpp)
+    target_link_libraries(test_sql_builder PRIVATE SqlBuilder)
+    add_test(NAME test_sql_builder COMMAND test_sql_builder)
 endif()

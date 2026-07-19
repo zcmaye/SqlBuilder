@@ -1,9 +1,10 @@
 ﻿#pragma once
 
 #include "TypeTraits.h"
+#include "StringUtils.h"
 #include <format>
 
-namespace hdy::tool::sql {
+namespace zc::sqlbuilder {
 
 	/**
 	 * 定义无效值.
@@ -13,12 +14,13 @@ namespace hdy::tool::sql {
 	/**
 	 * 转义字符串参数，防止SQL注入.
 	 */
-	inline std::string escape_string(const std::string& param) {
+	inline std::string escape_string(std::string_view param) {
 		std::string escaped;
 		escaped.reserve(param.size() * 2);
 		for (char c : param) {
 			switch (c) {
-			case '\'': escaped += "''"; break;
+			//case '\'': escaped += "''"; break;
+			case '\'': escaped += "\\'"; break;
 			case '\\': escaped += "\\\\"; break;
 			case '\n': escaped += "\\n"; break;
 			case '\r': escaped += "\\r"; break;
@@ -37,7 +39,7 @@ namespace hdy::tool::sql {
 	// 1. 字符串类型格式化（单独处理，保留原始字符串，可添加引号增强可读性）
 	template <typename T>
 	std::string format_value(const T& str,
-		std::enable_if_t <hdy::type::traits::is_string_v<T>, int > = 0)
+		std::enable_if_t <zc::type::traits::is_string_v<T>, int > = 0)
 	{
 		//转义字符串参数，防止SQL注入
 		auto e_str = escape_string(std::format("{}", str));
@@ -57,7 +59,7 @@ namespace hdy::tool::sql {
 	// 3. 容器类型格式化（手动拼接元素）
 	template <typename Container>
 	std::string format_value(const Container& con,
-		std::enable_if_t<hdy::type::traits::is_container_v<Container> && !hdy::type::traits::is_map_v<Container>, int> = 0)
+		std::enable_if_t<zc::type::traits::is_container_v<Container> && !zc::type::traits::is_map_v<Container>, int> = 0)
 	{
 		std::string result = "(";
 		bool first = true;
@@ -85,7 +87,7 @@ namespace hdy::tool::sql {
 #ifdef SUPPORT_OATPP
 	template <typename T>
 	std::string format_value(T& value,
-		std::enable_if_t<hdy::type::traits::is_object_v<T>, int> = 0)
+		std::enable_if_t<zc::type::traits::is_object_v<T>, int> = 0)
 	{
 		if constexpr (std::is_same_v<T, oatpp::String>) {
 			if (value != nullptr && !value->empty()) {
@@ -105,7 +107,7 @@ namespace hdy::tool::sql {
 	// 4. map/unordered_map/vector<pair<?,?>>类型格式化
 	template <typename Container>
 	std::string format_value(const Container& con,
-		std::enable_if_t<hdy::type::traits::is_map_v<Container>, int> = 0)
+		std::enable_if_t<zc::type::traits::is_map_v<Container>, int> = 0)
 	{
 		//值类型
 		using ValueType = std::decay_t<typename Container::value_type::second_type>;
@@ -115,7 +117,7 @@ namespace hdy::tool::sql {
 			if (!first) {
 				result += ", ";
 			}
-			if constexpr (hdy::type::traits::is_string_v<ValueType>) {
+			if constexpr (zc::type::traits::is_string_v<ValueType>) {
 				result += std::format("\"{}\": \"{}\"", elem.first, elem.second);
 			}
 			else {
@@ -131,7 +133,7 @@ namespace hdy::tool::sql {
 	template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 1), int> = 0>
 		std::string format_value(Args&&... args) {
 		//解包并格式化值
-		std::vector<std::string> vec = { format_value(std::forward<Args>(args))... };
+		StringList vec = { format_value(std::forward<Args>(args))... };
 		// 格式化结果
 		std::string result = "(";
 		bool first = true;

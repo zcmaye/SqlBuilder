@@ -1,8 +1,8 @@
-﻿#include "Table.h"
+#include "Table.h"
 #include "SqlBuilder.h"
 
 
-namespace hdy::tool::sql {
+namespace zc::sqlbuilder {
 	Table::Table(const Select& subQuery)
 		: _name("(" + subQuery.to_string() + ")")
 	{

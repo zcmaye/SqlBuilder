@@ -61,8 +61,8 @@
 - `GROUP BY`、`HAVING`、`ORDER BY`、`LIMIT`
 - SQL 注入防护（自动转义）
 - 可选支持 `std::optional` 与 `oatpp::Object`
-- 字面量运算符：`"ename"_c`、`"emp"_t`
-- 表结构宏声明（`DECLAR_TABLE`）
+- 字面量运算符：`"ename"_f`、`"emp"_t`
+- 表结构宏声明（`DECLARE_TABLE`）
 
 ## 平台支持
 
@@ -83,14 +83,14 @@
 #include "Function.h"
 #include <print>
 
-using namespace hdy::tool::sql;
-using namespace hdy::tool::sql::literals;
+using namespace zc::sqlbuilder;
+using namespace zc::sqlbuilder::field_literals;
 
 int main() {
-    auto sql = Select("empno"_c, "ename"_c)
+    auto sql = Select("empno"_f, "ename"_f)
         .from("emp")
-        .where("empno"_c == 7788 && "sal"_c > 5000)
-        .order_by("sal"_c.desc())
+        .where("empno"_f == 7788 && "sal"_f > 5000)
+        .order_by("sal"_f.desc())
         .limit(10)
         .to_string();
 
@@ -207,14 +207,14 @@ target_include_directories(your_target PRIVATE ${SqlBuilder_SOURCE_DIR}/src)
 ### SELECT 查询
 
 ```cpp
-using namespace hdy::tool::sql;
-using namespace hdy::tool::sql::literals;
+using namespace zc::sqlbuilder;
+using namespace zc::sqlbuilder::field_literals;
 
 // 基本查询
-auto sql = Select("empno"_c, "ename"_c.as("姓名"), "sal"_c)
+auto sql = Select("empno"_f, "ename"_f.as("姓名"), "sal"_f)
     .from("emp")
-    .where("sal"_c > 5000)
-    .order_by("sal"_c.desc())
+    .where("sal"_f > 5000)
+    .order_by("sal"_f.desc())
     .limit(10, 20)            // LIMIT 20 OFFSET 10
     .to_string();
 
@@ -225,11 +225,11 @@ auto all_sql = Select(all).from("emp").to_string();
 auto count_sql = Select(count_all()).from("emp").to_string();
 
 // 分组聚合
-auto group_sql = Select(count("deptno"_c).as("cnt"))
+auto group_sql = Select(count("deptno"_f).as("cnt"))
     .from("emp")
-    .group_by("deptno"_c, "job"_c)
-    .having("cnt"_c > 3)
-    .order_by("cnt"_c.desc())
+    .group_by("deptno"_f, "job"_f)
+    .having("cnt"_f > 3)
+    .order_by("cnt"_f.desc())
     .limit(10)
     .to_string();
 ```
@@ -237,18 +237,18 @@ auto group_sql = Select(count("deptno"_c).as("cnt"))
 ### INSERT 插入
 
 ```cpp
-using namespace hdy::tool::sql;
-using namespace hdy::tool::sql::literals;
+using namespace zc::sqlbuilder;
+using namespace zc::sqlbuilder::field_literals;
 
 // 单行插入
-auto sql = Insert("empno"_c, "ename"_c, "job"_c)
+auto sql = Insert("empno"_f, "ename"_f, "job"_f)
     .values(7788, "maye", "sales")
     .into("emp")
     .to_string();
 // INSERT INTO emp(empno, ename, job) VALUES (7788, 'maye', 'sales')
 
 // 多行插入
-auto multi_sql = Insert("empno"_c, "ename"_c, "job"_c)
+auto multi_sql = Insert("empno"_f, "ename"_f, "job"_f)
     .values(7788, "maye", "sales")
            (7789, "rose", "clerk")
            (7790, "jack", "manager")
@@ -259,30 +259,30 @@ auto multi_sql = Insert("empno"_c, "ename"_c, "job"_c)
 ### UPDATE 更新
 
 ```cpp
-using namespace hdy::tool::sql;
-using namespace hdy::tool::sql::literals;
+using namespace zc::sqlbuilder;
+using namespace zc::sqlbuilder::field_literals;
 
 auto sql = Update("emp")
-    .set("ename"_c = "maye")("sal"_c = 5200)("comm"_c = nullptr)
-    .where("empno"_c == 7788)
+    .set("ename"_f = "maye")("sal"_f = 5200)("comm"_f = nullptr)
+    .where("empno"_f == 7788)
     .to_string();
 // UPDATE emp SET ename = 'maye', sal = 5200, comm = NULL WHERE empno = 7788
 
 // 字段间运算
 auto calc_sql = Update("emp")
-    .set("sal"_c = "sal"_c - 5200)
-    .where("empno"_c == 7788)
+    .set("sal"_f = "sal"_f - 5200)
+    .where("empno"_f == 7788)
     .to_string();
 ```
 
 ### DELETE 删除
 
 ```cpp
-using namespace hdy::tool::sql;
-using namespace hdy::tool::sql::literals;
+using namespace zc::sqlbuilder;
+using namespace zc::sqlbuilder::field_literals;
 
 auto sql = Delete("emp")
-    .where("empno"_c == 7788)
+    .where("empno"_f == 7788)
     .to_string();
 // DELETE FROM emp WHERE empno = 7788
 ```
@@ -292,17 +292,17 @@ auto sql = Delete("emp")
 支持逻辑运算符 `&&`、`||`、`!`，以及丰富的比较运算：
 
 ```cpp
-using namespace hdy::tool::sql::literals;
+using namespace zc::sqlbuilder::field_literals;
 
-auto cond = "ename"_c == "maye"
-    && "sal"_c > 5000
-    && "sal"_c.between_and(3000, 8000)
-    && "comm"_c.is_null()
-    && "deptno"_c.is_not_null()
-    && "hiredate"_c.between_and("2020-01-01", "2020-12-31")
-    && "job"_c.like("sal", "%{}%")
-    && "empno"_c.in(std::vector{7788, 7789, 7790})
-    && "ename"_c.not_in(std::vector<const char*>{"admin", "root"});
+auto cond = "ename"_f == "maye"
+    && "sal"_f > 5000
+    && "sal"_f.between_and(3000, 8000)
+    && "comm"_f.is_null()
+    && "deptno"_f.is_not_null()
+    && "hiredate"_f.between_and("2020-01-01", "2020-12-31")
+    && "job"_f.like("sal", "%{}%")
+    && "empno"_f.in(std::vector{7788, 7789, 7790})
+    && "ename"_f.not_in(std::vector<const char*>{"admin", "root"});
 
 auto sql = Select(all).from("emp").where(cond).to_string();
 ```
@@ -310,27 +310,27 @@ auto sql = Select(all).from("emp").where(cond).to_string();
 ### 子查询
 
 ```cpp
-using namespace hdy::tool::sql;
-using namespace hdy::tool::sql::literals;
+using namespace zc::sqlbuilder;
+using namespace zc::sqlbuilder::field_literals;
 
 // WHERE 中的子查询
-auto sub = Select("empno"_c).from("emp").where("sal"_c > 5000);
-auto sql = Select("empno"_c, "ename"_c)
+auto sub = Select("empno"_f).from("emp").where("sal"_f > 5000);
+auto sql = Select("empno"_f, "ename"_f)
     .from("emp")
-    .where("empno"_c.in(sub))
+    .where("empno"_f.in(sub))
     .to_string();
 
 // FROM 中的子查询
-auto from_sub = Select("empno"_c, "ename"_c, "sal"_c).from("emp").where("sal"_c > 5000);
-auto sql2 = Select("empno"_c, "ename"_c)
+auto from_sub = Select("empno"_f, "ename"_f, "sal"_f).from("emp").where("sal"_f > 5000);
+auto sql2 = Select("empno"_f, "ename"_f)
     .from(from_sub).as("e")
     .to_string();
 
 // SELECT 字段中的子查询
-auto select_sub = Select("sal"_c.as("年薪"))
+auto select_sub = Select("sal"_f.as("年薪"))
     .from("emp")
-    .where("empno"_c == "e.empno"_c);
-auto sql3 = Select("empno"_c, Field(select_sub).as("年薪"), "ename"_c)
+    .where("empno"_f == "e.empno"_f);
+auto sql3 = Select("empno"_f, Field(select_sub).as("年薪"), "ename"_f)
     .from("emp").as("e")
     .to_string();
 ```
@@ -338,43 +338,43 @@ auto sql3 = Select("empno"_c, Field(select_sub).as("年薪"), "ename"_c)
 ### JOIN 连接
 
 ```cpp
-using namespace hdy::tool::sql;
-using namespace hdy::tool::sql::literals;
+using namespace zc::sqlbuilder;
+using namespace zc::sqlbuilder::field_literals;
 
 // INNER JOIN + ON
 auto sql = Select(all)
     .from("emp")
-    .join("dept").on("emp.deptno"_c == "dept.deptno"_c)
+    .join("dept").on("emp.deptno"_f == "dept.deptno"_f)
     .to_string();
 
 // LEFT JOIN + USING
 auto left_sql = Select(all)
     .from("emp")
     .left_join("dept")
-    .using_("deptno"_c)
+    .using_("deptno"_f)
     .to_string();
 
 // 多表 + 别名
 auto multi_sql = Select(count(all))
     .from("emp")
-    .right_join("dept").on("emp.deptno"_c == "dept.deptno"_c)
+    .right_join("dept").on("emp.deptno"_f == "dept.deptno"_f)
     .join("salgrade").as("s")
-        .on("emp.sal"_c >= "s.losal"_c && "emp.sal"_c <= "s.hisal"_c)
+        .on("emp.sal"_f >= "s.losal"_f && "emp.sal"_f <= "s.hisal"_f)
     .to_string();
 ```
 
 ### 聚合与函数
 
 ```cpp
-using namespace hdy::tool::sql;
-using namespace hdy::tool::sql::literals;
+using namespace zc::sqlbuilder;
+using namespace zc::sqlbuilder::field_literals;
 
-Select(count(all).as("total"), max("sal"_c).as("max_sal"),
-       min("sal"_c).as("min_sal"), avg("sal"_c).as("avg_sal"),
-       sum("sal"_c).as("total_sal"));
+Select(count(all).as("total"), max("sal"_f).as("max_sal"),
+       min("sal"_f).as("min_sal"), avg("sal"_f).as("avg_sal"),
+       sum("sal"_f).as("total_sal"));
 
 // 字符串函数
-upper("ename"_c);
+upper("ename"_f);
 lower("ename");
 substr("ename", 1, 5);
 replace("ename", "new_name");
@@ -387,7 +387,7 @@ date_format("hiredate", "%Y-%m-%d");
 
 // CASE WHEN
 auto case_field = case_end(
-    "deptno"_c,
+    "deptno"_f,
     std::vector{10, 20, 30},
     std::vector{"ACCOUNTING", "RESEARCH", "SALES"}
 ).as("dept_name");
@@ -399,31 +399,31 @@ auto case_field = case_end(
 
 ```cpp
 #include "SqlBuilder.h"
-using namespace hdy::tool::sql::literals;
+using namespace zc::sqlbuilder::field_literals;
 
 std::optional<int> empno = 7788;
 std::optional<std::string> ename;
 std::optional<int> sal = 6000;
 
-auto sql = Select("empno"_c, "ename"_c)
+auto sql = Select("empno"_f, "ename"_f)
     .from("emp")
-    .where("empno"_c == empno
-        && "ename"_c == ename     // ename 为 nullopt，自动跳过
-        && "sal"_c > sal)
+    .where("empno"_f == empno
+        && "ename"_f == ename     // ename 为 nullopt，自动跳过
+        && "sal"_f > sal)
     .to_string();
 // SELECT empno, ename FROM emp WHERE empno = 7788 AND sal > 6000
 ```
 
 ### 表结构声明
 
-通过 `DECLAR_TABLE` 宏快速声明表结构，避免手写字符串字面量：
+通过 `DECLARE_TABLE` 宏快速声明表结构，避免手写字符串字面量：
 
 ```cpp
 #include "Table.h"
 #include "BaseZcMacro.hpp"
 
-DECLAR_TABLE(Emp, emp, empno, ename, job, hiredate, sal, mgr, comm, deptno);
-DECLAR_TABLE(Dept, dept, deptno, dname, loc);
+DECLARE_TABLE(Emp, emp, empno, ename, job, hiredate, sal, mgr, comm, deptno);
+DECLARE_TABLE(Dept, dept, deptno, dname, loc);
 
 void demo() {
     const table::Emp emp;
@@ -458,7 +458,7 @@ void demo() {
 
 | 字面量 | 说明 | 示例 |
 |---|---|---|
-| `"_c"` / `"_f"` | 创建 `Field` | `"ename"_c` |
+| `"_f"` / `"_f"` | 创建 `Field` | `"ename"_f` |
 | `"_t"` | 创建 `Table` | `"emp"_t` |
 
 ### 函数库（`Function.h`）
@@ -495,24 +495,34 @@ SqlBuilder/
 │   ├── SqlBuilder.h      # Select/Insert/Update/Delete 核心类
 │   ├── Field.h/.cpp      # 字段类
 │   ├── Table.h/.cpp      # 表类
+│   ├── TableDeclare.h    # DECLARE_TABLE 宏定义（快速声明表结构）
 │   ├── Condition.h       # 条件类
 │   ├── Assign.h          # 赋值/赋值列表
-│   ├── FormatValue.h     # 值格式化与转义
 │   ├── Function.h        # SQL 函数封装
-│   ├── TypeTraits.h      # 类型特性辅助
-│   ├── StringUtils.h/.cpp# 字符串工具
 │   ├── SqlException.h    # 异常定义
 │   ├── Config.h          # 配置宏
-│   ├── BaseZcMacro.hpp   # 宏编程辅助（FOR_EACH）
-│   ├── optional_impl.inc # std::optional 支持
-│   └── oatpp_impl.inc    # oatpp 支持
+│   └── detail/           # 内部实现细节（用户无需直接 include）
+│       ├── FormatValue.h     # 值格式化与转义
+│       ├── TypeTraits.h      # 类型特性辅助
+│       ├── StringUtils.h/.cpp# 字符串工具
+│       ├── ZcMacro.hpp       # 宏编程辅助（FOR_EACH）
+│       ├── optional_impl.inc # std::optional 支持
+│       └── oatpp_impl.inc    # oatpp 支持
 ├── tests/
-│   ├── test_sql_builder.cpp
-│   └── test_table.cpp
+│   ├── test_field.cpp        # Field 类测试
+│   ├── test_condition.cpp    # Condition 类测试
+│   ├── test_assign.cpp       # Assign/AssignmentList 测试
+│   ├── test_select.cpp       # Select 语句测试
+│   ├── test_insert.cpp       # Insert 语句测试
+│   ├── test_update_delete.cpp# Update/Delete 语句测试
+│   ├── test_function.cpp     # SQL 函数测试
+│   ├── test_table.cpp        # Table 类与表结构声明测试
+│   └── test_sql_builder.cpp  # 综合功能测试
 ├── cmake/
 │   └── SqlBuilderConfig.cmake.in  # find_package 模板
 ├── CMakeLists.txt
 ├── LICENSE
+├── OPTIMIZATION.md       # 优化改进说明
 └── README.md
 ```
 
@@ -525,15 +535,48 @@ cmake -B build -DBUILD_TESTS=ON
 cmake --build build
 
 # Windows
-.\build\Debug\test_sql_builder.exe
+.\build\Debug\test_field.exe
+.\build\Debug\test_condition.exe
+.\build\Debug\test_assign.exe
+.\build\Debug\test_select.exe
+.\build\Debug\test_insert.exe
+.\build\Debug\test_update_delete.exe
+.\build\Debug\test_function.exe
 .\build\Debug\test_table.exe
 
 # Linux / macOS
-./build/test_sql_builder
+./build/test_field
+./build/test_condition
+./build/test_assign
+./build/test_select
+./build/test_insert
+./build/test_update_delete
+./build/test_function
 ./build/test_table
 ```
 
-测试用例覆盖：值格式化、WHERE 条件、UPDATE/INSERT/DELETE、SELECT、子查询、`std::optional`、表结构声明、JOIN 等。
+使用 CTest 批量运行所有测试：
+
+```bash
+cd build
+ctest -C Debug
+```
+
+测试用例覆盖：
+
+| 测试文件 | 覆盖功能 |
+|---|---|
+| `test_field.cpp` | Field 类（比较运算符、LIKE、IN、BETWEEN、别名、排序、字段运算） |
+| `test_condition.cpp` | Condition 类（逻辑运算符、空条件处理） |
+| `test_assign.cpp` | Assign/AssignmentList（赋值、NULL 值、链式组合） |
+| `test_select.cpp` | Select 语句（JOIN、GROUP BY、HAVING、ORDER BY、LIMIT、子查询） |
+| `test_insert.cpp` | Insert 语句（单行/多行插入、字段跳过） |
+| `test_update_delete.cpp` | Update/Delete 语句（SET、WHERE、子查询） |
+| `test_function.cpp` | SQL 函数（聚合函数、字符串函数、日期函数、CASE WHEN） |
+| `test_table.cpp` | Table 类（表名、别名、字面量运算符、operator bool） |
+| `test_table_declare.cpp` | 表结构声明（DECLARE_TABLE 宏、字段访问、完整 SQL 构建） |
+
+所有测试使用自定义断言宏，无需外部测试框架。
 
 ## 常见问题
 
@@ -572,7 +615,7 @@ cmake -B build -DSQLBUILDER_USE_OPTIONAL=ON ...
 
 ### Q4：如何避免 SQL 注入？
 
-库内部通过 `escape_string()` 自动转义字符串值。直接传入字符串字面量作为字段名（如 `"ename"_c`）是安全的；用户输入的值通过 `Field::operator==` 等接口传入时会自动加引号并转义。
+库内部通过 `escape_string()` 自动转义字符串值。直接传入字符串字面量作为字段名（如 `"ename"_f`）是安全的；用户输入的值通过 `Field::operator==` 等接口传入时会自动加引号并转义。
 
 **注意**：`Field::operator=(const char*)` 会将字符串原样作为 SQL 处理，仅用于受信任的 SQL 字面量，不要传入用户输入。
 
@@ -587,7 +630,7 @@ cmake -B build -DSQLBUILDER_USE_OPTIONAL=ON ...
 1. 提交 Issue 描述问题或建议
 2. Fork 仓库并创建特性分支
 3. 提交 PR，请保持代码风格一致：
-   - 命名空间 `hdy::tool::sql`
+   - 命名空间 `zc::sqlbuilder`
    - 头文件使用 `#pragma once`
    - 使用 C++23 特性
    - 新增功能请补充对应测试
