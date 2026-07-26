@@ -9,7 +9,7 @@
 #include "SqlBuilder.h"
 #include "Function.h"
 
-#include <print>
+#include <iostream>
 #include <string>
 #include <format>
 #include <sstream>
@@ -48,34 +48,34 @@ void test_value()
 	char str[] = "123";
 	char* p = str;
 	std::string_view sv = "123";
-	std::println("{}", zc::sqlbuilder::format_value("123"));
-	std::println("{}", zc::sqlbuilder::format_value(str));
-	std::println("{}", zc::sqlbuilder::format_value(p));
-	std::println("{}", zc::sqlbuilder::format_value(sv));
+	std::cout << zc::sqlbuilder::format_value("123") << std::endl;
+	std::cout << zc::sqlbuilder::format_value(str) << std::endl;
+	std::cout << zc::sqlbuilder::format_value(p) << std::endl;
+	std::cout << zc::sqlbuilder::format_value(sv) << std::endl;
 
-	std::println("{}", zc::sqlbuilder::format_value(name));
-	std::println("{}", zc::sqlbuilder::format_value(age));
-	std::println("{}", zc::sqlbuilder::format_value(sal));
-	std::println("{}", zc::sqlbuilder::format_value(gender));
-	std::println("{}", zc::sqlbuilder::format_value(is_manager));
+	std::cout << zc::sqlbuilder::format_value(name) << std::endl;
+	std::cout << zc::sqlbuilder::format_value(age) << std::endl;
+	std::cout << zc::sqlbuilder::format_value(sal) << std::endl;
+	std::cout << zc::sqlbuilder::format_value(gender) << std::endl;
+	std::cout << zc::sqlbuilder::format_value(is_manager) << std::endl;
 
 	//empno IN(1,2,3,4,5)
-	std::println("{}", zc::sqlbuilder::format_value(std::initializer_list<int>{1, 2, 3, 4, 5}));
-	std::println("{}", zc::sqlbuilder::format_value(std::vector{ "hello","maye" }));
-	std::println("{}", zc::sqlbuilder::format_value(std::array<double, 5>{3.14, 5.26, 2, 5}));
+	std::cout << zc::sqlbuilder::format_value(std::initializer_list<int>{1, 2, 3, 4, 5}) << std::endl;
+	std::cout << zc::sqlbuilder::format_value(std::vector{ "hello","maye" }) << std::endl;
+	std::cout << zc::sqlbuilder::format_value(std::array<double, 5>{3.14, 5.26, 2, 5}) << std::endl;
 }
 
 void test_where()
 {
 	//empno = 1 AND ename = 'maye' OR sal = 6000.02 AND gender = 1 
 	Condition condition("empno = 1");
-	std::println("{}", condition.to_string());
+	std::cout << condition.to_string() << std::endl;
 
 	auto condi = !(Condition("ename","=",zc::sqlbuilder::format_value("maye")) && 
 	Condition("age", "=",zc::sqlbuilder::format_value(123)))||
 		Condition("comm", "IS", null);
 
-	std::println("{}", condi.to_string());
+	std::cout << condi.to_string() << std::endl;
 
 	using zc::sqlbuilder::Field;
 
@@ -89,7 +89,7 @@ void test_where()
 		&& Field("job") < "sales"
 		&& Field("job") != "sales";
 
-	std::println("{}", c.to_string());
+	std::cout << c.to_string() << std::endl;
 
 	using namespace zc::sqlbuilder::field_literals;
 	c = "ename"_f.in(std::vector<const char*>{"hello", "nihao", "nice"})
@@ -97,24 +97,24 @@ void test_where()
 		&& "ename"_f.not_in(std::vector<const char*>{"hello", "nihao", "nice"})
 		&& "empnno"_f.not_in(std::vector{ 7788,99,55,6633 });
 
-	std::println("{}", c.to_string());
+	std::cout << c.to_string() << std::endl;
 
-	std::println("{}",(std::string)("empno"_f == "maye" && "deptno"_f == 20));
+	std::cout << (std::string)("empno"_f == "maye" && "deptno"_f == 20) << std::endl;
 }
 
 void test_update_set()
 {
 	//UPDATE emp SET ename='maye',job='sales',sal=6000.02,comm=0.1,deptno=20 WHERE empno=1;
 	auto set = (zc::sqlbuilder::Assign("ename", zc::sqlbuilder::format_value("maye")), zc::sqlbuilder::Assign("sal", zc::sqlbuilder::format_value(5200)));
-	std::println("{}", set.to_string());
+	std::cout << set.to_string() << std::endl;
 
 	using namespace zc::sqlbuilder::field_literals;
 	std::string name = "maye";
 	double sal = 5200.05;
 	auto sets = ("ename"_f = name, "sal"_f = sal, "comm"_f = 0.1,"deptno"_f = nullptr);
-	std::println("{}", sets.to_string());
+	std::cout << sets.to_string() << std::endl;
 
-	std::println("UPDATE emp SET {} ", sets.to_string()); 
+	std::cout << "UPDATE emp SET " << sets.to_string() << std::endl;
 }
 
 void test_select()
@@ -126,7 +126,7 @@ void test_select()
 		.from("emp")
 		.join("dept").on("emp.deptno"_f == "dept.deptno"_f)
 		.to_string();
-	std::println("{}", sql);
+	std::cout << sql << std::endl;
 
 	sql = zc::sqlbuilder::Select(zc::sqlbuilder::all)
 		.from("emp")
@@ -134,7 +134,7 @@ void test_select()
 		.using_("deptno"_f)
 		.where("emp.deptno"_f == 20 && "emp.sal"_f > 6000)
 		.to_string();
-	std::println("{}", sql);
+	std::cout << sql << std::endl;
 
 
 	sql = zc::sqlbuilder::Select(zc::sqlbuilder::fun::count(zc::sqlbuilder::all))
@@ -142,7 +142,7 @@ void test_select()
 		.right_join("dept").on("emp.deptno"_f == "dept.deptno"_f)
 		.join("salgrade").as("s").on("emp.sal"_f >= "s.losal"_f && "emp.sal"_f <= "s.hisal"_f)
 		.to_string();
-	std::println("{}", sql);
+	std::cout << sql << std::endl;
 
 
 	sql = zc::sqlbuilder::Select(zc::sqlbuilder::fun::count("deptno"_f).as("cnt"))
@@ -152,7 +152,7 @@ void test_select()
 		.order_by("cnt"_f.desc())
 		.limit(10, 20)
 		.to_string();
-	std::println("{}", sql);
+	std::cout << sql << std::endl;
 }
 
 void test_optional_select()
@@ -170,7 +170,7 @@ void test_optional_select()
 		.from("emp")
 		.where("ename"_f == searchEmp.ename && "hiredate"_f > searchEmp.hiredate && "sal"_f == searchEmp.sal)
 		.to_string();
-	std::println("{}", sql);
+	std::cout << sql << std::endl;
 }
 
 void test_insert()
@@ -214,64 +214,64 @@ void test_subquery()
 	std::string sql;
 
 	//查询
-	std::println("==========SELECT==========");
+	std::cout << "==========SELECT==========" << std::endl;
 	//-- 在where中使用子查询
 	auto subquery = zc::sqlbuilder::Select("empno"_f).from("emp").where("sal"_f > 5000);
 	sql = zc::sqlbuilder::Select("empno"_f, "ename"_f)
 		.from("emp")
 		.where("empno"_f.in(subquery))
 		.to_string();
-	std::println("WHERE SUBQUERY:{}", sql);
+	std::cout << "WHERE SUBQUERY:" << sql << std::endl;
 
 	//-- 在from中使用子查询
 	subquery = zc::sqlbuilder::Select("empno"_f,"ename"_f,"sal"_f,"deptno"_f).from("emp").where("sal"_f > 5000);
 	sql = zc::sqlbuilder::Select("empno"_f, "ename"_f)
 		.from(subquery).as("e")
 		.to_string();
-	std::println("FROM SUBQUERY:{}", sql);
+	std::cout << "FROM SUBQUERY:" << sql << std::endl;
 
 	//-- 在select中使用子查询
 	subquery = zc::sqlbuilder::Select("sal"_f.as("年薪")).from("emp").where("empno"_f == "e.empno"_f);
 	sql = zc::sqlbuilder::Select("empno"_f, zc::sqlbuilder::Field(subquery).as("年薪"), "ename"_f)
 		.from("emp").as("e")
 		.to_string();
-	std::println("SELECT SUBQUERY:{}", sql);
+	std::cout << "SELECT SUBQUERY:" << sql << std::endl;
 
 	//更新
-	std::println("==========UPDATE==========");
+	std::cout << "==========UPDATE==========" << std::endl;
 	subquery = zc::sqlbuilder::Select("empno"_f).from("emp").where("sal"_f > 6000);
 	sql = zc::sqlbuilder::Update("emp")
 		.set("sal"_f = "sal"_f - 5200)
 		.where("empno"_f.in(subquery))
 		.to_string();
-	std::println("UPDATE SUBQUERY:{}", sql);
+	std::cout << "UPDATE SUBQUERY:" << sql << std::endl;
 
 	//删除
-	std::println("==========DELETE==========");
+	std::cout << "==========DELETE==========" << std::endl;
 	subquery = zc::sqlbuilder::Select("empno"_f).from("emp").where("sal"_f > 6000);
 	sql = zc::sqlbuilder::Delete("emp")
 		.where("empno"_f.in(subquery))
 		.to_string();
-	std::println("DELETE SUBQUERY:{}", sql);
+	std::cout << "DELETE SUBQUERY:" << sql << std::endl;
 }
 
 void test_total()
 {
-	std::println("!!!!!!!!!!!!!!!!!!!!!!!!test_value!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!test_value!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 	test_value();
-	std::println("!!!!!!!!!!!!!!!!!!!!!!!!test_where!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!test_where!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 	test_where();
-	std::println("!!!!!!!!!!!!!!!!!!!!!!!!test_update_set!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!test_update_set!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 	test_update_set();
-	std::println("!!!!!!!!!!!!!!!!!!!!!!!!test_select!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!test_select!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 	test_select();
-	std::println("!!!!!!!!!!!!!!!!!!!!!!!!test_insert!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!test_insert!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 	test_insert();
-	std::println("!!!!!!!!!!!!!!!!!!!!!!!!test_update!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!test_update!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 	test_update();
-	std::println("!!!!!!!!!!!!!!!!!!!!!!!!test_delete!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!test_delete!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 	test_delete();
-	std::println("!!!!!!!!!!!!!!!!!!!!!!!!test_subquery!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!test_subquery!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 	test_subquery();
 
 
@@ -290,32 +290,32 @@ void test_total()
 		)
 		.to_string();
 
-	std::println("{}", sql);
+	std::cout << sql << std::endl;
 
 	sql = zc::sqlbuilder::Update("emp")
 		.set("sal"_f = "sal"_f - 5200)
 		.where("empno"_f == empno && "ename"_f == ename)
 		.to_string();
 
-	std::println("{}", sql);
+	std::cout << sql << std::endl;
 #endif
 }
 
 void test_func()
 {
 
-	std::println("!!!!!!!!!!!!!!!!!!!!!!!!test_fun!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!test_fun!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 	using namespace zc::sqlbuilder;
 	using namespace zc::sqlbuilder::field_literals;
 
 	//max("sal"_f).as("max_sal").to_string();
 
-	//std::println("{}", now().raw_str());
+	//std::cout << now().raw_str() << std::endl;
 
-	//std::println("{}",elt(2, "hello", "world", "maye", "zc","empno"_f).raw_str());
+	//std::cout << elt(2, "hello", "world", "maye", "zc","empno"_f).raw_str() << std::endl;
 
 
-	std::println("{} {}", fun::upper("hello").name(), fun::upper("job"_f).as("up_job").name());
+	std::cout << fun::upper("hello").name() << " " << fun::upper("job"_f).as("up_job").name() << std::endl;
 
 	Select("empno"_f, "ename"_f, fun::upper("job"_f));
 
@@ -323,7 +323,7 @@ void test_func()
 	"empno"_f == fun::upper("ename"_f);
 
 	auto c = fun::case_end(1, std::vector{ 1,2,3,4 }, std::vector{ "one","two","three","four" }).as("hello");
-	std::println("{}", c.name());
+	std::cout << c.name() << std::endl;
 }
 
 int main()

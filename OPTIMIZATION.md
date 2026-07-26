@@ -31,7 +31,7 @@
 
 ## 1. 项目概述
 
-`SqlBuilder` 是一个基于 C++23 的 SQL 构建器库，提供类型安全的链式 API 来构建 `SELECT / INSERT / UPDATE / DELETE` 语句，支持子查询、JOIN、聚合函数等功能，并可选支持 `std::optional` 和 `oatpp::Object`。
+`SqlBuilder` 是一个基于 C++20 的 SQL 构建器库，提供类型安全的链式 API 来构建 `SELECT / INSERT / UPDATE / DELETE` 语句，支持子查询、JOIN、聚合函数等功能，并可选支持 `std::optional` 和 `oatpp::Object`。
 
 **项目结构**：
 - `src/` - 核心库源码（头文件 + 少量 cpp）
@@ -288,11 +288,12 @@ bool empty() const noexcept { return _sql.empty(); }
 
 ## 6. 测试体系改进 (P2)
 
-### 6.1 ✅ 已修复：当前测试的不足
+### 6.1 ✅ 已修复：完整测试套件
 
 **位置**：[tests/](file:///c:/Users/Maye/Downloads/libSrc/SqlBuilder/tests/)
 
 已添加完整的测试套件，包含：
+- `TestAssert.h` - 自定义断言宏框架（ASSERT_TRUE、ASSERT_EQUAL、ASSERT_THROWS）
 - `test_field.cpp` - Field 类测试（比较运算符、LIKE、IN、BETWEEN、别名、排序）
 - `test_condition.cpp` - Condition 类测试（逻辑运算符、空条件处理）
 - `test_assign.cpp` - Assign/AssignmentList 测试（赋值、NULL 值）
@@ -300,8 +301,11 @@ bool empty() const noexcept { return _sql.empty(); }
 - `test_insert.cpp` - Insert 语句测试（单行/多行插入、字段跳过）
 - `test_update_delete.cpp` - Update/Delete 语句测试
 - `test_function.cpp` - SQL 函数测试（聚合函数、字符串函数、日期函数）
+- `test_table.cpp` - Table 类测试（表名、别名、字面量运算符、operator bool）
+- `test_table_declare.cpp` - DECLARE_TABLE 宏测试（字段访问、完整 SQL 构建）
+- `test_sql_builder_xxx.cpp` - 综合功能验证（值格式化、条件构建、子查询、可选类型）
 
-所有测试使用自定义断言宏，无需外部测试框架。
+所有测试使用自定义断言宏，无需外部测试框架。通过 CTest 集成，支持 `ctest -C Debug` 批量运行。
 
 ### 6.2 🔧 待优化：异常路径测试
 
@@ -390,7 +394,7 @@ bool empty() const noexcept { return _sql.empty(); }
 
 ## 10. 修改优先级总览
 
-### ✅ 已修复项（19 项）
+### ✅ 已修复项（20 项）
 
 | 优先级 | 问题 | 位置 |
 |---|---|---|
@@ -413,6 +417,7 @@ bool empty() const noexcept { return _sql.empty(); }
 | **P2** | `DECLARE_TABLE` 宏移至独立文件 | [TableDeclare.h](file:///c:/Users/Maye/Downloads/libSrc/SqlBuilder/src/TableDeclare.h) |
 | **P2** | `Insert::value_string` 字符串拼接逻辑 | [SqlBuilder.h:304](file:///c:/Users/Maye/Downloads/libSrc/SqlBuilder/src/SqlBuilder.h#L304) |
 | **P2** | 测试体系完善 | [tests/](file:///c:/Users/Maye/Downloads/libSrc/SqlBuilder/tests/) |
+| **P2** | 移除 `<print>` 依赖，改用 `<iostream>` | [test_sql_builder_xxx.cpp](file:///c:/Users/Maye/Downloads/libSrc/SqlBuilder/tests/test_sql_builder_xxx.cpp)、[README.md](file:///c:/Users/Maye/Downloads/libSrc/SqlBuilder/README.md) |
 | **P3** | README.md 完善 | [README.md](file:///c:/Users/Maye/Downloads/libSrc/SqlBuilder/README.md) |
 
 ### 🔧 待修复项（按优先级排序）
@@ -451,4 +456,4 @@ bool empty() const noexcept { return _sql.empty(); }
 
 ---
 
-*本文档基于代码审查生成，反映截至 2026-07-19 的项目状态。建议作为后续重构的参考基线。*
+*本文档基于代码审查生成，反映截至 2026-07-26 的项目状态。建议作为后续重构的参考基线。*

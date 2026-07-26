@@ -81,7 +81,7 @@
 ```cpp
 #include "SqlBuilder.h"
 #include "Function.h"
-#include <print>
+#include <iostream>
 
 using namespace zc::sqlbuilder;
 using namespace zc::sqlbuilder::field_literals;
@@ -94,7 +94,7 @@ int main() {
         .limit(10)
         .to_string();
 
-    std::println("{}", sql);
+    std::cout << sql << std::endl;
     // 输出: SELECT empno, ename FROM emp WHERE (empno = 7788 AND sal > 5000) ORDER BY sal DESC LIMIT 10
     return 0;
 }
@@ -509,6 +509,7 @@ SqlBuilder/
 │       ├── optional_impl.inc # std::optional 支持
 │       └── oatpp_impl.inc    # oatpp 支持
 ├── tests/
+│   ├── TestAssert.h           # 自定义断言宏框架
 │   ├── test_field.cpp        # Field 类测试
 │   ├── test_condition.cpp    # Condition 类测试
 │   ├── test_assign.cpp       # Assign/AssignmentList 测试
@@ -516,8 +517,9 @@ SqlBuilder/
 │   ├── test_insert.cpp       # Insert 语句测试
 │   ├── test_update_delete.cpp# Update/Delete 语句测试
 │   ├── test_function.cpp     # SQL 函数测试
-│   ├── test_table.cpp        # Table 类与表结构声明测试
-│   └── test_sql_builder.cpp  # 综合功能测试
+│   ├── test_table.cpp        # Table 类测试
+│   ├── test_table_declare.cpp# DECLARE_TABLE 宏测试
+│   └── test_sql_builder_xxx.cpp # 综合功能测试（原示例）
 ├── cmake/
 │   └── SqlBuilderConfig.cmake.in  # find_package 模板
 ├── CMakeLists.txt
@@ -543,6 +545,8 @@ cmake --build build
 .\build\Debug\test_update_delete.exe
 .\build\Debug\test_function.exe
 .\build\Debug\test_table.exe
+.\build\Debug\test_table_declare.exe
+.\build\Debug\test_sql_builder.exe
 
 # Linux / macOS
 ./build/test_field
@@ -553,6 +557,8 @@ cmake --build build
 ./build/test_update_delete
 ./build/test_function
 ./build/test_table
+./build/test_table_declare
+./build/test_sql_builder
 ```
 
 使用 CTest 批量运行所有测试：
@@ -575,6 +581,7 @@ ctest -C Debug
 | `test_function.cpp` | SQL 函数（聚合函数、字符串函数、日期函数、CASE WHEN） |
 | `test_table.cpp` | Table 类（表名、别名、字面量运算符、operator bool） |
 | `test_table_declare.cpp` | 表结构声明（DECLARE_TABLE 宏、字段访问、完整 SQL 构建） |
+| `test_sql_builder_xxx.cpp` | 综合功能验证（值格式化、条件构建、子查询、可选类型） |
 
 所有测试使用自定义断言宏，无需外部测试框架。
 
