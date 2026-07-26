@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Value.h"
 #include <string>
 #include <format>
 
@@ -14,6 +15,16 @@ namespace zc::sqlbuilder {
 
 		Condition(const std::string& column, const std::string& op, const std::string& value)
 			: _sql(std::format("{} {} {}", column, op, value))
+		{
+		}
+
+		Condition(const std::string& column, const std::string& op, const Value& value)
+			: _sql(std::format("{} {} {}", column, op, value))
+		{
+		}
+
+		Condition(const std::string& column, const std::string& op, const ValueList& value)
+			: _sql(std::format("{} {} ({:n})", column, op, value))
 		{
 		}
 

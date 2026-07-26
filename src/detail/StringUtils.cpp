@@ -2,40 +2,27 @@
 #include <algorithm>
 #include <iterator>
 
-namespace zc {
-    std::string StringList::join(const std::string& sep) const
-    {
-        if (empty()) {
-            return "";
-        }
+// ============ StringUtils 命名空间函数实现 ============
+namespace zc::str{
 
-        std::string result;
-        result.reserve(size() * 10); // 预分配空间，优化性能
+	std::string join(const std::vector<std::string>& vec, const std::string_view& delimiter) {
+		// 格式化结果
+		std::string result;
+		bool first = true;
+		for (const auto& elem : vec) {
+			if (!first) {
+				result += delimiter;
+			}
+			result += elem;
+			first = false;
+		}
+		return result;
+	}
 
-        for (size_t i = 0; i < size(); ++i) {
-            if (i > 0) {
-                result += sep;
-            }
-            result += (*this)[i];
-        }
-
-        return result;
-    }
-
-    std::string StringList::join(char sep) const
-    {
-        return join(std::string(1, sep));
-    }
-
-    bool StringList::contains(const std::string& str, bool caseSensitive) const
-    {
-        return contains(std::string_view(str), caseSensitive);
-    }
-
-    bool StringList::contains(std::string_view str, bool caseSensitive) const
+	bool contains(const std::vector<std::string>& vec, std::string_view str, bool caseSensitive)
     {
         if (caseSensitive) {
-            return std::find(begin(), end(), str) != end();
+			return std::find(vec.begin(), vec.end(), str) != vec.end();
         }
         else {
             // 不区分大小写的查找
@@ -45,7 +32,7 @@ namespace zc {
                 std::back_inserter(lowerStr),
                 [](unsigned char c) { return std::tolower(c); });
 
-            return std::any_of(begin(), end(), [&lowerStr](const std::string& item) {
+            return std::any_of(vec.begin(), vec.end(), [&lowerStr](const std::string& item) {
                 if (item.length() != lowerStr.length()) {
                     return false;
                 }
@@ -57,13 +44,11 @@ namespace zc {
                 });
         }
     }
-}
 
-// ============ StringUtils 命名空间函数实现 ============
-namespace zc::string_utils {
-    StringList split(const std::string& str, const std::string& sep)
+
+    std::vector<std::string> split(const std::string& str, const std::string& sep)
     {
-        StringList result;
+        std::vector<std::string> result;
 
         if (str.empty()) {
             return result;
@@ -93,24 +78,10 @@ namespace zc::string_utils {
         return result;
     }
 
-    StringList split(const std::string& str, char sep)
+    std::vector<std::string> split(const std::string& str, char sep)
     {
         return split(str, std::string(1, sep));
     }
-
-	std::string join(const StringList& vec, const std::string& delimiter) {
-		// 格式化结果
-		std::string result;
-		bool first = true;
-		for (const auto& elem : vec) {
-			if (!first) {
-				result += delimiter;
-			}
-			result += elem;
-			first = false;
-		}
-		return result;
-	}
 
 	// 去除字符串首尾空白
 	std::string trim(const std::string& str) {

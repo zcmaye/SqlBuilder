@@ -4,29 +4,15 @@
 #include <vector>
 #include <algorithm>
 
-namespace zc {
-
-	class StringList : public std::vector<std::string> 
-	{
-	public:
-		using std::vector<std::string>::vector;
-
-		std::string join(const std::string& sep) const;
-		std::string join(char sep) const;
-
-		bool contains(const std::string& str, bool caseSensitive = true) const;
-		bool contains(std::string_view str, bool caseSensitive = true) const;
-	};
-}
-
-
-namespace zc::string_utils {
-	//使用指定分隔符分割字符串
-	StringList split(const std::string& str, const std::string& sep);
-	StringList split(const std::string& str, char sep);
-
+namespace zc::str{
 	//使用逗号连接所有字符串
-	std::string join(const StringList& vec, const std::string& delimiter = ",");
+	std::string join(const std::vector<std::string>& vec, const std::string_view& delimiter = ",");
+	//判断判断字符串是否包含指定字符串
+	bool contains(const std::vector<std::string>& vec, std::string_view str, bool caseSensitive = true);
+
+	//使用指定分隔符分割字符串
+	std::vector<std::string> split(const std::string& str, const std::string& sep);
+	std::vector<std::string> split(const std::string& str, char sep);
 
 	// 去除字符串首尾空白
 	std::string trim(const std::string& str);

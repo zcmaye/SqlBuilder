@@ -68,6 +68,11 @@ void test_condition_nested() {
     ASSERT_EQUAL("NOT (empno = 1 AND ename = 'maye')", c.to_string(), "Nested NOT with AND");
 }
 
+void test_condition_filed_comparison() {
+    Condition c = "empno"_f == "sal.empno"_f && "ename"_f == "t.ename"_f;
+    ASSERT_EQUAL("(empno = sal.empno AND ename = t.ename)", c.to_string(), "Filed Comparison error");
+}
+
 void test_condition_to_string() {
     Condition c("empno = 1");
     ASSERT_EQUAL("empno = 1", static_cast<const std::string&>(c), "Condition cast to string");
@@ -87,6 +92,7 @@ int main() {
     test_condition_or_empty();
     test_condition_chained();
     test_condition_nested();
+    test_condition_filed_comparison();
     test_condition_to_string();
 
     test::summary();

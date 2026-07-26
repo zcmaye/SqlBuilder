@@ -8,11 +8,10 @@
 #pragma once
 
 #include "Config.h"
-#include "detail/FormatValue.h"
+#include "Value.h"
 #include "Condition.h"
 #include "Assign.h"
 #include "SqlException.h"
-
 
 namespace zc::sqlbuilder {
 
@@ -80,44 +79,38 @@ namespace zc::sqlbuilder {
 		}
 
 	public:	//字段与值比较
-		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
-		Condition operator==(T value) const {
-			return Condition(_name, "=", format_value<T>(value));
+		Condition operator==(const Value& value) const {
+			return Condition(_name, "=", value);
 		}
 
-		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
-		Condition operator>(T value) const {
-			return Condition(_name, ">", format_value<T>(value));
+		Condition operator>(const Value& value) const {
+			return Condition(_name, ">", value);
 		}
 
-		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
-		Condition operator>=(T value) const {
-			return Condition(_name, ">=", format_value<T>(value));
+		Condition operator>=(const Value& value) const {
+			return Condition(_name, ">=", value);
 		}
 
-		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
-		Condition operator<(T value) const {
-			return Condition(_name, "<", format_value<T>(value));
+		Condition operator<(const Value& value) const {
+			return Condition(_name, "<", value);
 		}
 
-		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
-		Condition operator<=(T value) const {
-			return Condition(_name, "<=", format_value<T>(value));
+		Condition operator<=(const Value& value) const {
+			return Condition(_name, "<=", value);
 		}
 
-		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
-		Condition operator!=(T value) const {
-			return Condition(_name, "!=", format_value<T>(value));
+		Condition operator!=(const Value& value) const {
+			return Condition(_name, "!=", value);
 		}
 
 		//comm IS NULL
 		Condition is_null() const {
-			return Condition(_name, "IS", "NULL");
+			return Condition(_name, "IS", null);
 		}
 
 		//comm IS NOT NULL
 		Condition is_not_null() const {
-			return Condition(_name, "IS NOT", "NULL");
+			return Condition(_name, "IS NOT", null);
 		}
 
 		//ename LIKE '张%'
@@ -131,40 +124,36 @@ namespace zc::sqlbuilder {
 		}
 
 		//hiredate BETWEEN '1990-01-01' AND '2000-01-01'
-		template<typename T, std::enable_if_t<(std::is_arithmetic_v<T> || zc::type::traits::is_string_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
-		Condition between_and(const T& lower, const T& upper) const {
-			return Condition(_name, "BETWEEN", std::format("{} AND {}", format_value(lower), format_value(upper)));
+		Condition between_and(const Value& lower, const Value& upper) const {
+			return Condition(_name, "BETWEEN", std::format("{} AND {}", lower, upper));
 		}
 
 		//ename IN ('张三', '李四')
-		template<typename T, std::enable_if_t<zc::type::traits::is_container_v<T> && !zc::type::traits::is_string_v<T> && !std::is_arithmetic_v<T>, int> = 0>
-		Condition in(const T& value) const {
-			return Condition(_name, "IN", format_value(value));
+		Condition in(const ValueList& value) const {
+			return Condition(_name, "IN", value);
 		}
 
 		//ename NOT IN ('张三', '李四')
-		template<typename T, std::enable_if_t<zc::type::traits::is_container_v<T> && !zc::type::traits::is_string_v<T> && !std::is_arithmetic_v<T>, int> = 0>
-		Condition not_in(const T& value) const {
-			return Condition(_name, "NOT IN", format_value(value));
+		Condition not_in(const ValueList& value) const {
+			return Condition(_name, "NOT IN", value);
 		}
+
 	public:	//UPDATE 语句中SET值设置
-		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>)
-			&& !zc::type::traits::is_container_v<T>, int> = 0>
-		AssignmentList operator=(const T& value) const {
-			return Assign(_name, format_value(value));
+		AssignmentList operator=(const Value& value) const {
+			return Assign(_name, value);
 		}
 
 		AssignmentList operator=(std::nullptr_t) const {
-			return Assign(_name, "NULL");
+			return Assign(_name, null);
 		}
 
 		AssignmentList operator=(const Field& field) const {
-			return Assign(_name, field.name());
+			return Assign(_name, field);
 		}
 
 		// 可选：支持字面量字符串（不加引号）
-		AssignmentList raw_set(const char* raw_sql) const {
-			return Assign(_name, raw_sql);  // 信任用户提供的 SQL
+		AssignmentList assign(const char* raw_sql) const {
+			return Assign(_name, Value(raw_sql, Value::Raw));  // 信任用户提供的 SQL
 		}
 	public://字段与字段比较
 		Condition operator==(const Field& field) const {
@@ -204,6 +193,7 @@ namespace zc::sqlbuilder {
 		Condition in(const Select& subquery) const;
 		Condition not_in(const Select& subquery) const;
 	public://字段运算
+#if 0
 		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
 		Field operator+(T value) const {
 			return Field(std::format("{} + {}", _name, format_value(value)));
@@ -228,6 +218,28 @@ namespace zc::sqlbuilder {
 		Field operator%(T value) const {
 			return Field(std::format("{} % {}", _name, format_value(value)));
 		}
+#else
+		Field operator+(const Value& value) const {
+			return Field(std::format("{} + {}", _name, value));
+		}
+
+		Field operator-(const Value& value) const {
+			return Field(std::format("{} - {}", _name, value));
+		}
+
+		Field operator*(const Value& value) const {
+			return Field(std::format("{} * {}", _name, value));
+		}
+
+		Field operator/(const Value& value) const {
+			return Field(std::format("{} / {}", _name, value));
+		}
+
+		Field operator%(const Value& value) const {
+			return Field(std::format("{} % {}", _name, value));
+		}
+#endif
+
 #include "detail/optional_impl.inc"
 #include "detail/oatpp_impl.inc"
 	private:
@@ -273,5 +285,4 @@ namespace zc::sqlbuilder {
 		//解包并格式化值
 		return join({ std::forward<Args>(args)... });
 	}
-
 }

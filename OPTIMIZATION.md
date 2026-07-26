@@ -187,7 +187,7 @@ std::string to_string() const {
 ### 4.3 🔧 待优化：命名空间不一致
 
 **问题**：
-- `StringList` 类位于 `zc` 命名空间。
+- `std::vector<std::string>` 类位于 `zc` 命名空间。
 - `StringUtils::split` 等函数位于 `zc::string_utils` 命名空间。
 - `SqlException`、`TableError`、`FieldError` 位于全局命名空间。
 

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "SqlException.h"
+#include "Value.h"
 #include <format>
 #include <vector>
 
@@ -15,11 +16,11 @@ namespace zc::sqlbuilder {
 	/**
 	 * 单个字段赋值.
 	 */
+#if 0
 	class Assign
 	{
 	public:
 		explicit Assign() {}
-
 		Assign(std::string field, std::string value)
 			: _field(std::move(field)), _value(std::move(value))
 		{
@@ -37,19 +38,43 @@ namespace zc::sqlbuilder {
 		std::string _field;
 		std::string _value;
 	};
+#else
+	class Assign
+	{
+	public:
+		explicit Assign() {}
+		Assign(std::string field, Value value)
+			: _field(std::move(field)), _value(std::move(value))
+		{
+		}
+
+		std::string to_string() const {
+			ZC_ASSERT(!_field.empty() && !_value.empty(), "field or value is empty");
+			return std::format("{} = {}", _field, _value);
+		}
+		operator const std::string()const { return to_string(); }
+
+		bool empty()const { return _value.empty() || _field.empty(); }
+		explicit operator bool()const { return !empty(); }
+	private:
+		std::string _field;
+		Value _value;
+	};
+
+#endif
 
 	class AssignmentList {
 	public:
 		explicit AssignmentList() {}
 
-		AssignmentList(std::string field, std::string value)
-			: _sets({ Assign{std::move(field), std::move(value)} })
+		AssignmentList(std::string field, Value value)
 		{
+			add(Assign(std::move(field), std::move(value)));
 		}
 
 		AssignmentList(Assign set)
-			: _sets({ std::move(set) })
 		{
+			add(std::move(set));
 		}
 
 		AssignmentList& operator+=(const AssignmentList& other) {
@@ -57,17 +82,23 @@ namespace zc::sqlbuilder {
 		}
 
 		AssignmentList& add(const AssignmentList& other) {
-			_sets.insert(_sets.end(), other._sets.begin(), other._sets.end());
+			if (!other.empty()) {
+				_sets.insert(_sets.end(), other._sets.begin(), other._sets.end());
+			}
 			return *this;
 		}
 
 		AssignmentList& add(const Assign& set) {
-			_sets.push_back(set);
+			if (!set.empty()) {
+				_sets.push_back(set);
+			}
 			return *this;
 		}
 
 		AssignmentList& add(Assign&& set) {
-			_sets.emplace_back(std::move(set));
+			if (!set.empty()) {
+				_sets.emplace_back(std::move(set));
+			}
 			return *this;
 		}
 

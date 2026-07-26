@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+﻿cmake_minimum_required(VERSION 3.15)
 
 project(SqlBuilder
     VERSION 1.0.0
@@ -28,9 +28,22 @@ else()
 endif()
 
 add_library(SqlBuilder
+    src/Field.h
     src/Field.cpp
+    src/Value.h
+    src/Value.cpp
+    src/Table.h
     src/Table.cpp
-    #src/detail/SqlValue.cpp
+    src/Function.h
+    src/SqlBuilder.h
+    src/SqlException.h
+    src/TableDeclare.h
+    src/Config.h
+    src/Condition.h
+    src/Assign.h
+    src/detail/TypeTraits.h
+    src/detail/FormatValue.h
+    src/detail/StringUtils.h
     src/detail/StringUtils.cpp
 )
 target_include_directories(SqlBuilder

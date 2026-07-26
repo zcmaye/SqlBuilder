@@ -48,7 +48,7 @@ namespace zc::sqlbuilder {
 		std::string to_string() const {
 			TABLE_ASSERT(!_name.empty(), "Table name is empty");
 			if (_alias) {
-				return std::format("{} AS '{}' ", _name, *_alias);
+				return std::format("{} AS {} ", _name, *_alias);
 			}
 			return _name;
 		}

@@ -138,12 +138,12 @@ namespace zc::sqlbuilder::fun{
 	}
 	template <typename ...Args, std::enable_if_t<(sizeof...(Args) > 1) && std::conjunction_v<zc::type::traits::is_string<std::decay_t<Args>>...>, int> = 0>
 	inline Field elt(size_t n, Args&&...args) {
-		StringList vec = { std::format("'{}'", std::forward<Args>(args))... };
+		std::vector<std::string> vec = { std::format("'{}'", std::forward<Args>(args))... };
 		return Field(std::format("ELT({},{})", n, join(vec)));
 	}
 	template <typename ...Args, std::enable_if_t<(sizeof...(Args) > 1) && std::conjunction_v<zc::type::traits::is_string<std::decay_t<Args>>...>, int> = 0>
 	inline Field field(std::string_view str, Args&&...args) {
-		StringList vec = { std::format("'{}'", std::forward<Args>(args))... };
+		std::vector<std::string> vec = { std::format("'{}'", std::forward<Args>(args))... };
 		return Field(std::format("FIELD({},{})", str, join(vec)));
 	}
 	inline Field find_in_set(std::string_view str, std::string_view strlist) {

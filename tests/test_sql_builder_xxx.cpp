@@ -73,7 +73,7 @@ void test_where()
 
 	auto condi = !(Condition("ename","=",zc::sqlbuilder::format_value("maye")) && 
 	Condition("age", "=",zc::sqlbuilder::format_value(123)))||
-		Condition("comm", "IS", "NULL");
+		Condition("comm", "IS", null);
 
 	std::println("{}", condi.to_string());
 

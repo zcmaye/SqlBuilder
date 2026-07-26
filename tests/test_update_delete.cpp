@@ -34,7 +34,7 @@ void test_update_with_null() {
 
 void test_update_field_operation() {
     auto sql = Update("emp")
-        .set("sal"_f.raw_set("sal + 100"))
+        .set("sal"_f.assign("sal + 100"))
         .where("empno"_f == 7788)
         .to_string();
     ASSERT_TRUE(sql.find("sal = sal + 100") != std::string::npos, "Update field operation");
@@ -66,7 +66,7 @@ void test_delete_with_table() {
 void test_update_subquery() {
     auto sub = Select("empno"_f).from("emp").where("sal"_f > 6000);
     auto sql = Update("emp")
-        .set("sal"_f.raw_set("sal - 5200"))
+        .set("sal"_f.assign("sal - 5200"))
         .where("empno"_f.in(sub))
         .to_string();
     ASSERT_TRUE(sql.find("IN (") != std::string::npos, "Update with subquery");

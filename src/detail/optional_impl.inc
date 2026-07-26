@@ -5,7 +5,7 @@
 			if (!value.has_value()) {
 				return Assign();
 			}
-			return Assign(_name, format_value(value));
+			return Assign(_name, *value);
 		}
 
 		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
@@ -13,7 +13,7 @@
 			if (!value.has_value()) {
 				return Condition();
 			}
-			return *this == *value;
+			return *this == Value(*value);
 		}
 
 		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
@@ -21,7 +21,7 @@
 			if (!value.has_value()) {
 				return Condition();
 			}
-			return *this > *value;
+			return *this > Value(*value);
 		}
 
 		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
@@ -29,7 +29,7 @@
 			if (!value.has_value()) {
 				return Condition();
 			}
-			return *this >= *value;
+			return *this >= Value(*value);
 		}
 
 		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
@@ -37,7 +37,7 @@
 			if (!value.has_value()) {
 				return Condition();
 			}
-			return *this < *value;
+			return *this < Value(*value);
 		}
 
 		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
@@ -45,7 +45,7 @@
 			if (!value.has_value()) {
 				return Condition();
 			}
-			return *this <= *value;
+			return *this <= Value(*value);
 		}
 
 		template<typename T, std::enable_if_t<(zc::type::traits::is_string_v<T> || std::is_arithmetic_v<T>) && !zc::type::traits::is_container_v<T>, int> = 0>
@@ -53,7 +53,7 @@
 			if (!value.has_value()) {
 				return Condition();
 			}
-			return *this != *value;
+			return *this != Value(*value);
 		}
 		/*
 		Condition operator==(std::nullopt_t) const {
@@ -78,8 +78,8 @@
 		Condition like(const std::optional<std::string>& value, std::string_view fmt = "%{}%") const 
 		{
 			if (value.has_value()) {
-				//return like(*value, fmt);
-				return like(*value, fmt);
+				//return like(Value(*value), fmt);
+				return like(Value(*value), fmt);
 			}
 			return Condition();
 		}

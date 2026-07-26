@@ -10,6 +10,7 @@
 #include "SqlException.h"
 #include "Field.h"
 #include "Table.h"
+#include "Value.h"
 #include <algorithm>
 
 namespace zc::sqlbuilder {
@@ -70,7 +71,7 @@ namespace zc::sqlbuilder {
 		}
 
 		Select& as(const std::string& _alias) {
-			_join_tables.push_back(std::format("AS '{}'", _alias));
+			_join_tables.push_back(std::format("AS {}", _alias));
 			return *this;
 		}
 
@@ -114,7 +115,7 @@ namespace zc::sqlbuilder {
 			result.reserve(256);	//预估容量
 			result = std::format("SELECT {}", zc::sqlbuilder::join(_columns,", "));
 			result += ' ';
-			result += _join_tables.join(" ");
+			result += zc::str::join(_join_tables, " ");
 			if (!_cond.empty()) {
 				result += ' ';
 				result += std::format("WHERE {}", _cond.to_string());
@@ -205,7 +206,7 @@ namespace zc::sqlbuilder {
 #endif
 	private:
 		std::vector<Field> _columns;
-		StringList _join_tables;
+		std::vector<std::string> _join_tables;
 		Condition _cond;
 		std::string _group_by;
 		Condition _having;
@@ -229,8 +230,8 @@ namespace zc::sqlbuilder {
 		template<typename ...Args, std::enable_if_t < (sizeof...(Args) > 0)/* && is_all_arithmetic_or_string_v<Args...>*/, int> = 0>
 		Insert& values(Args&& ...args) {
 			ZC_ASSERT(_columns.size() == sizeof...(args), "fields and values size not match");
-			auto vec = StringList{ format_value(args)... };
-			_values.emplace_back(vec);
+			auto value_list = ValueList{ Value(args)... };
+			_values.emplace_back(value_list);
 			return *this;
 		}
 
@@ -239,22 +240,22 @@ namespace zc::sqlbuilder {
 			return values(std::forward<Args>(args)...);
 		}
 
-		template<typename Object, typename Fn /* = std::function<StringList(Object)> */,
+		template<typename Object, typename Fn /* = std::function<std::vector<std::string>(Object)> */,
 			std::enable_if_t<!zc::type::traits::is_container_v<std::decay_t<Object>>, int> = 0>
-		Insert& values_if(Object&& object, Fn&& fn) {
-			auto vec = fn(object);
-			ZC_ASSERT(_columns.size() == vec.size(), "fields and values size not match");
-			_values.emplace_back(vec);
+		Insert& values_object(Object&& object, Fn&& fn) {
+			auto value_list = fn(object);
+			ZC_ASSERT(_columns.size() == value_list.size(), "fields and values size not match");
+			_values.emplace_back(value_list);
 			return *this;
 		}
 
-		template<typename Container, typename Fn /* = std::function<StringList(Object)> */,
+		template<typename Container, typename Fn /* = std::function<std::vector<std::string>(Object)> */,
 			std::enable_if_t<zc::type::traits::is_container_v<std::decay_t<Container>>, int> = 0>
 		Insert& values_for(Container&& con, Fn&& fn) {
 			for (auto& object : con) {
-				auto vec = fn(object);
-				ZC_ASSERT(_columns.size() == vec.size(), "fields and values size not match");
-				_values.emplace_back(vec);
+				auto value_list = fn(object);
+				ZC_ASSERT(_columns.size() == value_list.size(), "fields and values size not match");
+				_values.emplace_back(value_list);
 			}
 			return *this;
 		}
@@ -322,7 +323,7 @@ namespace zc::sqlbuilder {
 	private:
 		Table _table;
 		std::vector<Field> _columns;
-		std::vector<StringList> _values;
+		std::vector<ValueList> _values;
 	};
 
 	class Update {

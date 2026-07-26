@@ -9,7 +9,7 @@ namespace zc::sqlbuilder {
 	/**
 	 * 定义无效值.
 	 */
-	inline constexpr std::string_view InvalidValue { "InvalidValue" };
+	inline constexpr const char* InvalidValue{ "InvalidValue" };
 
 	/**
 	 * 转义字符串参数，防止SQL注入.
@@ -133,7 +133,7 @@ namespace zc::sqlbuilder {
 	template<typename ...Args, std::enable_if_t<(sizeof...(Args) > 1), int> = 0>
 		std::string format_value(Args&&... args) {
 		//解包并格式化值
-		StringList vec = { format_value(std::forward<Args>(args))... };
+		std::vector<std::string> vec = { format_value(std::forward<Args>(args))... };
 		// 格式化结果
 		std::string result = "(";
 		bool first = true;
