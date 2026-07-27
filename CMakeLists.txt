@@ -2,7 +2,7 @@
 
 project(SqlBuilder
     VERSION 1.0.0
-    DESCRIPTION "A C++23 SQL Builder library"
+    DESCRIPTION "A C++20 SQL Builder library"
     LANGUAGES CXX
 )
 
@@ -11,7 +11,7 @@ option(SQLBUILDER_USE_OPTIONAL "Enable std::optional support" ON)
 option(SQLBUILDER_USE_OATPP "Enable oatpp support" OFF)
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
