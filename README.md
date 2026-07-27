@@ -1,9 +1,9 @@
 # SqlBuilder
 
-> 一个简单、灵活且类型安全的 C++23 SQL 构建器库，旨在简化数据库查询操作、提升代码可读性并防范 SQL 注入。
+> 一个简单、灵活且类型安全的 C++20 SQL 构建器库，旨在简化数据库查询操作、提升代码可读性并防范 SQL 注入。
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![C++23](https://img.shields.io/badge/C%2B%2B-23-orange.svg)](https://en.cppreference.com/)
+[![C++20](https://img.shields.io/badge/C%2B%2B-20-orange.svg)](https://en.cppreference.com/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](#平台支持)
 
 ## 目录
@@ -37,7 +37,7 @@
 
 ## 简介
 
-**SqlBuilder** 是一个使用 C++23 构建的 SQL 语句生成库，提供链式调用的现代 API，让开发者以类型安全的方式构造 SQL 语句，避免手写字符串拼接带来的错误与安全风险。
+**SqlBuilder** 是一个使用 C++20 构建的 SQL 语句生成库，提供链式调用的现代 API，让开发者以类型安全的方式构造 SQL 语句，避免手写字符串拼接带来的错误与安全风险。
 
 设计目标：
 
@@ -72,7 +72,7 @@
 | Linux   | GCC 13+ / Clang 16+ | ✅ |
 | macOS   | Apple Clang 15+ / Clang 16+ | ✅ |
 
-> 要求支持 C++23 的编译器（`std::format`、`std::optional` 等）。
+> 要求支持 C++20 的编译器（`std::format`、`std::optional` 等）。
 
 ## 快速开始
 
@@ -589,12 +589,12 @@ ctest -C Debug
 
 ### Q1：编译时找不到 `<format>` 头文件？
 
-`SqlBuilder` 依赖 C++23 的 `std::format`，请使用支持 C++23 的编译器：
+`SqlBuilder` 依赖 C++20 的 `std::format`，请使用支持 C++20 的编译器：
 - MSVC 2022 (v19.34+)
 - GCC 13+
 - Clang 16+
 
-并在 CMake 中设置 `set(CMAKE_CXX_STANDARD 23)`。
+并在 CMake 中设置 `set(CMAKE_CXX_STANDARD 20)`。
 
 ### Q2：`find_package(SqlBuilder)` 找不到配置文件？
 
@@ -639,7 +639,7 @@ cmake -B build -DSQLBUILDER_USE_OPTIONAL=ON ...
 3. 提交 PR，请保持代码风格一致：
    - 命名空间 `zc::sqlbuilder`
    - 头文件使用 `#pragma once`
-   - 使用 C++23 特性
+   - 使用 C++20 特性
    - 新增功能请补充对应测试
 
 ## 许可证
