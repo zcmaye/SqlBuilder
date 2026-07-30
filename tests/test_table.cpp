@@ -21,7 +21,7 @@ void test_table_alias() {
     Table t = Table("emp").as("e");
     ASSERT_TRUE(t.has_alias(), "Table has alias");
     ASSERT_EQUAL("e", t.alias().value(), "Table alias value");
-    ASSERT_EQUAL("emp AS 'e' ", t.to_string(), "Table with alias to_string");
+    ASSERT_EQUAL("emp AS e ", t.to_string(), "Table with alias to_string");
 }
 
 void test_table_operator_bool() {
